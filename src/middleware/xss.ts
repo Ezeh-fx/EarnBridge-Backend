@@ -9,23 +9,21 @@ const escapeHtml = (unsafe: string): string => {
     .replace(/'/g, '&#039;');
 };
 
-const sanitizeObject = (obj: any): any => {
-  if (typeof obj === 'string') {
-    return escapeHtml(obj);
+const sanitizeObject = (value: unknown): unknown => {
+  if (typeof value === 'string') {
+    return escapeHtml(value);
   }
-  if (Array.isArray(obj)) {
-    return obj.map(sanitizeObject);
+  if (Array.isArray(value)) {
+    return value.map(sanitizeObject);
   }
-  if (obj !== null && typeof obj === 'object') {
-    const sanitized: any = {};
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        sanitized[key] = sanitizeObject(obj[key]);
-      }
+  if (value !== null && typeof value === 'object') {
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value)) {
+      sanitized[key] = sanitizeObject(val);
     }
     return sanitized;
   }
-  return obj;
+  return value;
 };
 
 export const xssSanitizer = (req: Request, _res: Response, next: NextFunction) => {
@@ -33,10 +31,10 @@ export const xssSanitizer = (req: Request, _res: Response, next: NextFunction) =
     req.body = sanitizeObject(req.body);
   }
   if (req.query) {
-    req.query = sanitizeObject(req.query);
+    req.query = sanitizeObject(req.query) as Request['query'];
   }
   if (req.params) {
-    req.params = sanitizeObject(req.params);
+    req.params = sanitizeObject(req.params) as Request['params'];
   }
   next();
 };
