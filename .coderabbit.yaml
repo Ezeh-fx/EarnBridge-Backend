@@ -1,0 +1,52 @@
+# CodeRabbit configuration for Earnbridge Backend.
+# Reviews run automatically on pull requests once the CodeRabbit
+# GitHub App is installed on the repository.
+# Project rules live in AGENTS.md and are enforced as review guidance.
+
+language: en-US
+tone_instructions: >-
+  Be direct and specific. This service handles real money, so flag
+  correctness and security issues over style nits.
+early_access: false
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  path_instructions:
+    - path: "src/**/*.ts"
+      instructions: >-
+        Enforce the rules in AGENTS.md: strict TypeScript with no `any`,
+        Zod validation at route boundaries with strict schemas, no raw
+        request values in database queries, and the `{ data: ... }` /
+        `{ error: { code, message } }` response envelopes.
+    - path: "src/services/**"
+      instructions: >-
+        Money logic lives here. Amounts must be integers in minor units,
+        never floats. The ledger is append-only. Multi-step money writes
+        must be wrapped in a MongoDB transaction and be idempotent.
+        Flag any trust of client-supplied amounts.
+    - path: "src/middleware/**"
+      instructions: >-
+        Auth checks must go through the shared middleware only. Every
+        user-data query must be scoped to the authenticated user's ID
+        from the session, never from the request body or URL.
+    - path: "src/lib/**"
+      instructions: >-
+        Third-party clients only. Secrets must be read from config/env,
+        never hardcoded or logged.
+    - path: "src/tests/**"
+      instructions: >-
+        Tests must mock third-party services (ayeT, Google, Arcjet, AI
+        provider). Money and auth code needs duplicate-callback,
+        insufficient-balance, expired-token, and reused-refresh-token
+        coverage.
+chat:
+  auto_reply: true
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "AGENTS.md"
