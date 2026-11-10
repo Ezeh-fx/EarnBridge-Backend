@@ -27,12 +27,21 @@ export interface WithdrawalDocument extends IWithdrawal, Document {
 const withdrawalSchema = new Schema<WithdrawalDocument>(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    amountMicroUsd: { type: Number, required: true, min: 1 },
+    amountMicroUsd: {
+      type: Number,
+      required: true,
+      min: 1,
+      validate: {
+        validator: (value: number) => Number.isSafeInteger(value),
+        message: 'amountMicroUsd must be a safe integer',
+      },
+    },
     currency: { type: String, required: true, default: 'USD' },
     status: {
       type: String,
       enum: ['pending', 'approved', 'paid', 'rejected'],
       default: 'pending',
+      required: true,
     },
     method: { type: String },
     payoutDetails: { type: Schema.Types.Mixed, select: false },

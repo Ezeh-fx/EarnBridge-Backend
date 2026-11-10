@@ -7,7 +7,8 @@ export interface ICallbackEvent {
   transactionId: string;
   externalIdentifier: string;
   rawQuery?: string;
-  payoutUsd: string;
+  rawPayoutUsd: string;
+  payoutMicroUsd?: number;
   isChargeback: boolean;
   user?: Types.ObjectId;
   ledgerEntryId?: Types.ObjectId;
@@ -28,7 +29,8 @@ const callbackEventSchema = new Schema<CallbackEventDocument>(
     transactionId: { type: String, required: true },
     externalIdentifier: { type: String, required: true },
     rawQuery: { type: String },
-    payoutUsd: { type: String, required: true },
+    rawPayoutUsd: { type: String, required: true },
+    payoutMicroUsd: { type: Number },
     isChargeback: { type: Boolean, required: true, default: false },
     user: { type: Schema.Types.ObjectId, ref: 'User' },
     ledgerEntryId: { type: Schema.Types.ObjectId, ref: 'LedgerEntry' },
@@ -43,7 +45,7 @@ const callbackEventSchema = new Schema<CallbackEventDocument>(
   { timestamps: true },
 );
 
-callbackEventSchema.index({ transactionId: 1 });
+callbackEventSchema.index({ provider: 1, transactionId: 1 }, { unique: true });
 callbackEventSchema.index({ externalIdentifier: 1 });
 callbackEventSchema.index({ status: 1 });
 
