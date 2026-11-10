@@ -17,6 +17,14 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRY: z.string().default('15m'),
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
+  ACCESS_TOKEN_COOKIE_NAME: z
+    .string()
+    .regex(/^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/, 'Invalid cookie name')
+    .default('eb_access_token'),
+  REFRESH_TOKEN_COOKIE_NAME: z
+    .string()
+    .regex(/^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/, 'Invalid cookie name')
+    .default('eb_refresh_token'),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   ARCJET_KEY: z.string().optional(),
@@ -44,6 +52,14 @@ const envSchema = z.object({
       code: z.ZodIssueCode.custom,
       message: 'MONGODB_URI must be explicitly provided in production',
       path: ['MONGODB_URI'],
+    });
+  }
+
+  if (data.ACCESS_TOKEN_COOKIE_NAME === data.REFRESH_TOKEN_COOKIE_NAME) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Access and refresh token cookie names must differ',
+      path: ['REFRESH_TOKEN_COOKIE_NAME'],
     });
   }
 });
