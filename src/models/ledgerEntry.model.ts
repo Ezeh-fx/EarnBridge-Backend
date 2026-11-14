@@ -85,48 +85,30 @@ const ledgerEntrySchema = new Schema<LedgerEntryDocument>(
 
 const appendOnlyError = () => new Error('LedgerEntry is append-only');
 
-const lastArgAsNext = (args: unknown[]): ((err?: Error) => void) | undefined => {
-  const next = args[args.length - 1];
-  return typeof next === 'function' ? (next as (err?: Error) => void) : undefined;
-};
-
-ledgerEntrySchema.pre('save', function (this: LedgerEntryDocument, ...args: unknown[]) {
-  const next = lastArgAsNext(args);
-  if (!next) {
-    return;
+ledgerEntrySchema.pre('save', async function (this: LedgerEntryDocument) {
+  if (!this.isNew) {
+    throw appendOnlyError();
   }
-  if (this.isNew) {
-    next();
-    return;
-  }
-  next(appendOnlyError());
 });
 
-ledgerEntrySchema.pre(
-  'deleteOne',
-  { document: true, query: false },
-  function (...args: unknown[]) {
-    lastArgAsNext(args)?.(appendOnlyError());
-  }
-);
-
-const blockQueryMutation = function (...args: unknown[]) {
-  lastArgAsNext(args)?.(appendOnlyError());
+const blockMutation = async function (): Promise<void> {
+  throw appendOnlyError();
 };
 
-ledgerEntrySchema.pre('updateOne', blockQueryMutation);
-ledgerEntrySchema.pre('updateMany', blockQueryMutation);
-ledgerEntrySchema.pre('findOneAndUpdate', blockQueryMutation);
-ledgerEntrySchema.pre('replaceOne', blockQueryMutation);
-ledgerEntrySchema.pre('deleteOne', blockQueryMutation);
-ledgerEntrySchema.pre('deleteMany', blockQueryMutation);
-ledgerEntrySchema.pre('findOneAndDelete', blockQueryMutation);
+ledgerEntrySchema.pre('deleteOne', { document: true, query: true }, blockMutation);
+ledgerEntrySchema.pre('updateOne', { document: false, query: true }, blockMutation);
+ledgerEntrySchema.pre('updateMany', { document: false, query: true }, blockMutation);
+ledgerEntrySchema.pre('findOneAndUpdate', { document: false, query: true }, blockMutation);
+ledgerEntrySchema.pre('replaceOne', { document: false, query: true }, blockMutation);
+ledgerEntrySchema.pre('deleteMany', { document: false, query: true }, blockMutation);
+ledgerEntrySchema.pre('findOneAndDelete', { document: false, query: true }, blockMutation);
 
 ledgerEntrySchema.index({ user: 1, createdAt: -1 });
 ledgerEntrySchema.index({ availableAt: 1 });
 ledgerEntrySchema.index(
   { withdrawalId: 1 },
   {
+    name: 'withdrawalId_1',
     unique: true,
     partialFilterExpression: {
       withdrawalId: { $exists: true },
@@ -137,6 +119,7 @@ ledgerEntrySchema.index(
 ledgerEntrySchema.index(
   { withdrawalId: 1 },
   {
+    name: 'ledger_withdrawal_release_unique',
     unique: true,
     partialFilterExpression: {
       withdrawalId: { $exists: true },

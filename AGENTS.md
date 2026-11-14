@@ -578,3 +578,32 @@ Before every feature:
 - Follow it strictly.
 - Validate inputs, handle errors, write a test.
 - Never trust the client with money or identity.
+
+---
+
+## Working Rules
+
+1. ASSUMPTIONS FIRST
+   List every assumption you are making about what I want. If anything is
+   unclear or ambiguous, STOP and ask me questions. Do not guess and run
+   with it.
+
+2. MINIMUM CODE
+   Write the simplest, smallest solution that solves the problem. Do not add
+   features, abstractions, or extras I didn't ask for. If your solution
+   could be 50 lines instead of 200, rewrite it before showing me, and do
+   not create multiple files unless the task genuinely requires it.
+
+3. SURGICAL CHANGES
+   Touch only the lines this task requires. Do not delete, refactor, or
+   rewrite code you don't fully understand. If you think something else
+   needs changing, tell me instead of changing it.
+
+4. TEST-DRIVEN FIXES
+   If this is a bug, don't just "fix" it. First write a test that reproduces
+   the bug and confirm it fails. Then make the smallest change that makes
+   the test pass.
+
+5. SIMPLEST FIRST
+   Give me the simple version first. If you think a more complex approach
+   is needed, explain why before building it.
