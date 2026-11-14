@@ -64,8 +64,12 @@ const passwordResetEmailSchema = z
       .url()
       .max(2048)
       .refine((value) => {
-        const protocol = new URL(value).protocol;
-        return protocol === 'https:' || protocol === 'http:';
+        try {
+          const protocol = new URL(value).protocol;
+          return protocol === 'https:' || protocol === 'http:';
+        } catch {
+          return false;
+        }
       }, 'Reset URL must use HTTP or HTTPS'),
     expiresInMinutes: expiresInMinutesSchema.optional(),
   })

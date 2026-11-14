@@ -40,6 +40,7 @@ export const buildSmtpTransportOptions = (config: SmtpEmailProviderConfig) => ({
   host: config.host,
   port: config.port,
   secure: config.secure,
+  requireTLS: !config.secure,
   auth: {
     user: config.auth.user,
     pass: config.auth.pass,

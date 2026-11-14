@@ -157,6 +157,16 @@ describe('dedicated email functions', () => {
     expect(sent?.text ?? '').toContain('token=abc123&foo=bar');
   });
 
+  it('rejects malformed password reset URLs with a validation error', async () => {
+    const { provider, sendEmail } = createProvider();
+    const service = createEmailService(provider);
+
+    await expect(
+      service.sendPasswordResetEmail('user@example.com', 'not a url')
+    ).rejects.toBeInstanceOf(ZodError);
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
   it('sends a general account notification email', async () => {
     const { provider, sendEmail } = createProvider();
     const service = createEmailService(provider);

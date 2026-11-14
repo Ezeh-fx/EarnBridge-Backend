@@ -41,6 +41,7 @@ describe('SMTP transport configuration', () => {
       host: 'smtp.gmail.com',
       port: 465,
       secure: true,
+      requireTLS: false,
       auth: {
         user: 'sender@example.com',
         pass: 'test-app-password',
@@ -49,6 +50,18 @@ describe('SMTP transport configuration', () => {
       greetingTimeout: SMTP_GREETING_TIMEOUT_MS,
       socketTimeout: SMTP_SOCKET_TIMEOUT_MS,
     });
+  });
+
+  it('requires STARTTLS when implicit TLS is disabled', () => {
+    expect(
+      buildSmtpTransportOptions({ ...config, port: 587, secure: false })
+    ).toEqual(
+      expect.objectContaining({
+        port: 587,
+        secure: false,
+        requireTLS: true,
+      })
+    );
   });
 });
 
