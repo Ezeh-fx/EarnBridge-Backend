@@ -23,6 +23,9 @@ const validPayload = {
   aud: 'test-google-client-id',
 };
 
+const googleRejection = (message: string) =>
+  Object.assign(new Error(message), { response: { status: 400 } });
+
 const mockTicket = (payload: unknown) => ({
   getPayload: () => payload,
 });
@@ -53,7 +56,7 @@ describe('verifyGoogleIdToken', () => {
   });
 
   it('rejects when Google verification fails (invalid token)', async () => {
-    mocks.verifyIdToken.mockRejectedValue(new Error('Wrong recipient'));
+    mocks.verifyIdToken.mockRejectedValue(googleRejection('Wrong recipient'));
 
     await expect(verifyGoogleIdToken('bad-token')).rejects.toMatchObject({
       statusCode: 401,
@@ -63,7 +66,7 @@ describe('verifyGoogleIdToken', () => {
 
   it('rejects an expired token', async () => {
     mocks.verifyIdToken.mockRejectedValue(
-      new Error('Token used too late')
+      googleRejection('Token used too late')
     );
 
     await expect(verifyGoogleIdToken('expired-token')).rejects.toMatchObject({
@@ -73,7 +76,7 @@ describe('verifyGoogleIdToken', () => {
 
   it('rejects a token with an incorrect audience', async () => {
     mocks.verifyIdToken.mockRejectedValue(
-      new Error('Token audience mismatch')
+      googleRejection('Token audience mismatch')
     );
 
     await expect(verifyGoogleIdToken('wrong-aud-token')).rejects.toMatchObject({
@@ -138,12 +141,12 @@ describe('verifyGoogleIdToken', () => {
     expect(mocks.verifyIdToken).not.toHaveBeenCalled();
   });
 
-  it('maps unexpected Google client errors to INVALID_GOOGLE_TOKEN', async () => {
+  it('maps transport/provider failures to a server error, not 401', async () => {
     mocks.verifyIdToken.mockRejectedValue(new Error('socket hangup'));
 
     await expect(verifyGoogleIdToken('token')).rejects.toMatchObject({
-      statusCode: 401,
-      code: 'INVALID_GOOGLE_TOKEN',
+      statusCode: 500,
+      code: 'GOOGLE_AUTH_FAILED',
     });
   });
 });

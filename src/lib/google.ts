@@ -50,7 +50,17 @@ export const verifyGoogleIdToken = async (
       { err: err instanceof Error ? err.message : 'unknown' },
       'Google ID token verification failed'
     );
-    throw invalidToken();
+
+    // Google rejects invalid tokens with an HTTP response (400).
+    // Failures without one are transport/provider errors, not bad credentials.
+    const status = (err as { response?: { status?: number } }).response?.status;
+    if (typeof status === 'number') {
+      throw invalidToken();
+    }
+    throw AppError.internal(
+      'GOOGLE_AUTH_FAILED',
+      'Google authentication service error'
+    );
   }
 
   if (!payload) {

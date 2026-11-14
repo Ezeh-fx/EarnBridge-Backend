@@ -108,7 +108,7 @@ ledgerEntrySchema.index({ availableAt: 1 });
 ledgerEntrySchema.index(
   { withdrawalId: 1 },
   {
-    name: 'ledger_withdrawal_hold_unique',
+    name: 'withdrawalId_1',
     unique: true,
     partialFilterExpression: {
       withdrawalId: { $exists: true },

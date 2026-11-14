@@ -62,6 +62,8 @@ The raw ID token is never logged. Verification failures are logged at
 - `GOOGLE_EMAIL_MISSING` (401) — token has no email claim
 - `GOOGLE_EMAIL_UNVERIFIED` (401) — `email_verified` is not `true`
 - `GOOGLE_AUTH_NOT_CONFIGURED` (500) — `GOOGLE_CLIENT_ID` not set
+- `GOOGLE_AUTH_FAILED` (500) — Google transport/provider failure
+  (e.g. network error); distinct from invalid credentials
 
 ## Consuming the Service Later
 
