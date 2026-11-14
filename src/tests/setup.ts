@@ -11,3 +11,4 @@ process.env.EMAIL_PASSWORD ??= 'test-google-app-password';
 process.env.EMAIL_FROM ??= 'test-sender@example.com';
 process.env.EMAIL_APP_NAME ??= 'EarnBridge';
 process.env.CLIENT_URL ??= 'http://localhost:5173';
+process.env.GOOGLE_CLIENT_ID ??= 'test-google-client-id';
