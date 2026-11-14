@@ -1,0 +1,13 @@
+process.env.NODE_ENV ??= 'test';
+process.env.LOG_LEVEL ??= 'fatal';
+process.env.MONGODB_URI ??= 'mongodb://127.0.0.1:27017/earnbridge-test';
+process.env.JWT_ACCESS_SECRET ??= 'test-jwt-access-secret-min-32-chars';
+process.env.JWT_REFRESH_SECRET ??= 'test-jwt-refresh-secret-min-32-chars';
+process.env.EMAIL_HOST ??= 'smtp.gmail.com';
+process.env.EMAIL_PORT ??= '465';
+process.env.EMAIL_SECURE ??= 'true';
+process.env.EMAIL_USER ??= 'test-sender@example.com';
+process.env.EMAIL_PASSWORD ??= 'test-google-app-password';
+process.env.EMAIL_FROM ??= 'test-sender@example.com';
+process.env.EMAIL_APP_NAME ??= 'EarnBridge';
+process.env.CLIENT_URL ??= 'http://localhost:5173';

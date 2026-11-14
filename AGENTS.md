@@ -546,6 +546,30 @@ After completing each full feature (e.g., authentication, wallet, offerwall inte
 
 ---
 
+## Future Enhancement: Background Email Processing with BullMQ and Redis
+
+Status: NOT YET IMPLEMENTED.
+
+When approved, introduce background email delivery using BullMQ with
+the existing Redis infrastructure for queue storage. The planned work
+includes:
+
+- BullMQ queues and dedicated email worker processes.
+- Retry mechanisms with exponential backoff.
+- Failed-job management, monitoring, and observability.
+- Idempotent email processing so retries cannot send duplicates.
+- Secure handling of sensitive email data: never log SMTP credentials,
+  passwords, OTP values, or password-reset tokens/URLs, and keep
+  sensitive payloads out of logs and unnecessary queue metadata.
+
+Do not install BullMQ, modify Redis configuration, or create workers
+until this feature is explicitly requested. The current email service
+boundary (`EmailProvider` plus the reusable service functions) is
+intended to let a future queue call the same email functions without
+rewriting templates or business logic.
+
+---
+
 ## Final Reminder
 
 Before every feature:

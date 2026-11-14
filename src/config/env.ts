@@ -8,6 +8,42 @@ const preprocessEmptyString = (value: unknown) => {
   return value;
 };
 
+const preprocessBoolean = (value: unknown) => {
+  if (value === undefined || value === '') {
+    return undefined;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') {
+      return true;
+    }
+    if (normalized === 'false') {
+      return false;
+    }
+  }
+
+  return value;
+};
+
+const isHttpUrl = (value: string): boolean => {
+  try {
+    const protocol = new URL(value).protocol;
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+const httpUrlSchema = z
+  .string()
+  .url()
+  .refine(isHttpUrl, 'URL must use HTTP or HTTPS');
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().default('3000'),
@@ -41,6 +77,29 @@ const envSchema = z.object({
   AI_API_KEY: z.string().optional(),
   AI_MODEL: z.string().optional(),
   FRONTEND_ORIGIN: z.string().url().default('http://localhost:5173'),
+  EMAIL_HOST: z.string().trim().min(1).max(253).default('smtp.gmail.com'),
+  EMAIL_PORT: z.coerce.number().int().min(1).max(65535).default(465),
+  EMAIL_SECURE: z.preprocess(preprocessBoolean, z.boolean().default(true)),
+  EMAIL_USER: z.string().trim().email(),
+  EMAIL_PASSWORD: z.string().min(1),
+  EMAIL_FROM: z.string().trim().email(),
+  EMAIL_FROM_NAME: z.preprocess(
+    preprocessEmptyString,
+    z
+      .string()
+      .trim()
+      .min(1)
+      .max(80)
+      .regex(/^[^<>"\\,\r\n]+$/, 'Invalid from name')
+      .optional()
+  ),
+  EMAIL_APP_NAME: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(/^[^<>"\\,\r\n]+$/, 'Invalid app name'),
+  CLIENT_URL: httpUrlSchema,
   SENTRY_DSN: z.preprocess(preprocessEmptyString, z.string().url().optional()),
   SENTRY_ENVIRONMENT: z.string().default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),

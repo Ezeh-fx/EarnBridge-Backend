@@ -12,6 +12,11 @@ export interface IUser {
   publicId: string;
   role: UserRole;
   status: UserStatus;
+  emailVerifiedAt?: Date;
+  emailVerificationOtpHash?: string;
+  emailVerificationOtpExpiresAt?: Date;
+  passwordResetTokenHash?: string;
+  passwordResetExpiresAt?: Date;
   lastLoginAt?: Date;
   deletedAt?: Date;
 }
@@ -38,6 +43,11 @@ const userSchema = new Schema<UserDocument>(
     publicId: { type: String, required: true, unique: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     status: { type: String, enum: ['active', 'suspended', 'deleted'], default: 'active' },
+    emailVerifiedAt: { type: Date },
+    emailVerificationOtpHash: { type: String, select: false },
+    emailVerificationOtpExpiresAt: { type: Date },
+    passwordResetTokenHash: { type: String, select: false },
+    passwordResetExpiresAt: { type: Date },
     lastLoginAt: { type: Date },
     deletedAt: { type: Date },
   },
