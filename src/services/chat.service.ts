@@ -128,7 +128,7 @@ export const sendChatMessage = async (
     conversation: conversation._id,
     user: userObjectId,
   })
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: -1, _id: -1 })
     .limit(CHAT_HISTORY_LIMIT)
     .select('role content')
     .lean();

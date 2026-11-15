@@ -42,6 +42,7 @@ let otherUserId: string;
 
 const openAiReply = (text: string) => ({
   id: 'resp_test',
+  status: 'completed',
   output: [{ type: 'message', role: 'assistant', content: [{ type: 'output_text', text }] }],
   output_text: text,
   usage: { input_tokens: 10, output_tokens: 5, total_tokens: 15 },
@@ -141,6 +142,29 @@ describe('chat.service', () => {
     ]);
   });
 
+  it('orders history deterministically when messages share a timestamp', async () => {
+    const first = await sendChatMessage(userId, { message: 'First question' });
+
+    const sameTime = new Date('2024-01-01T00:00:00.000Z');
+    await Message.updateMany(
+      { conversation: first.conversationId },
+      { $set: { createdAt: sameTime } }
+    );
+
+    mocks.create.mockResolvedValue(openAiReply('Second answer'));
+    await sendChatMessage(userId, {
+      conversationId: first.conversationId,
+      message: 'Second question',
+    });
+
+    const secondCallArgs = mocks.create.mock.calls[1][0];
+    expect(secondCallArgs.input.slice(0, 3)).toEqual([
+      { role: 'user', content: 'First question' },
+      { role: 'assistant', content: 'Hello! How can I help?' },
+      { role: 'user', content: 'Second question' },
+    ]);
+  });
+
   it('reuses an existing open conversation for the same user', async () => {
     const first = await sendChatMessage(userId, { message: 'Hi' });
     const second = await sendChatMessage(userId, {
@@ -193,6 +217,63 @@ describe('chat.service', () => {
       code: 'AI_REQUEST_FAILED',
     });
 
+    expect(await Message.countDocuments({})).toBe(0);
+  });
+
+  it('returns the refusal text when the model refuses', async () => {
+    mocks.create.mockResolvedValue({
+      id: 'resp_refusal',
+      status: 'completed',
+      output: [
+        {
+          type: 'message',
+          role: 'assistant',
+          status: 'completed',
+          content: [
+            { type: 'refusal', refusal: 'I cannot help with that request.' },
+          ],
+        },
+      ],
+      output_text: '',
+      usage: { input_tokens: 10, output_tokens: 5, total_tokens: 15 },
+    });
+
+    const result = await sendChatMessage(userId, { message: 'Do something bad' });
+
+    expect(result.reply).toBe('I cannot help with that request.');
+    const saved = await Message.findOne({ role: 'assistant' });
+    expect(saved?.content).toBe('I cannot help with that request.');
+  });
+
+  it('uses a safe fallback when the response has no text or refusal', async () => {
+    mocks.create.mockResolvedValue({
+      id: 'resp_empty',
+      status: 'completed',
+      output: [],
+      output_text: '',
+      usage: { input_tokens: 10, output_tokens: 0, total_tokens: 10 },
+    });
+
+    const result = await sendChatMessage(userId, { message: 'Hi' });
+
+    expect(result.reply).toBe(
+      'Sorry, I could not generate a response. Please try again.'
+    );
+  });
+
+  it('maps incomplete OpenAI responses to a retryable error', async () => {
+    mocks.create.mockResolvedValue({
+      ...openAiReply(''),
+      status: 'incomplete',
+      incomplete_details: { reason: 'max_output_tokens' },
+    });
+
+    await expect(
+      sendChatMessage(userId, { message: 'Hi' })
+    ).rejects.toMatchObject({
+      statusCode: 503,
+      code: 'AI_RESPONSE_INCOMPLETE',
+    });
     expect(await Message.countDocuments({})).toBe(0);
   });
 

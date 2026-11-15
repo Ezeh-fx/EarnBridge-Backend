@@ -60,6 +60,28 @@ const getClient = (): OpenAI => {
 const unavailable = (code: string): AppError =>
   AppError.serviceUnavailable(code, ASSISTANT_UNAVAILABLE_MESSAGE);
 
+const EMPTY_REPLY_FALLBACK =
+  'Sorry, I could not generate a response. Please try again.';
+
+const extractReplyText = (response: OpenAI.Responses.Response): string => {
+  if (response.output_text.trim().length > 0) {
+    return response.output_text;
+  }
+
+  const refusal = response.output
+    .filter(
+      (item): item is OpenAI.Responses.ResponseOutputMessage =>
+        item.type === 'message'
+    )
+    .flatMap((message) => message.content)
+    .find(
+      (part): part is OpenAI.Responses.ResponseOutputRefusal =>
+        part.type === 'refusal'
+    );
+
+  return refusal?.refusal ?? EMPTY_REPLY_FALLBACK;
+};
+
 const toAiError = (err: unknown): AppError => {
   if (err instanceof AppError) {
     return err;
@@ -133,8 +155,20 @@ export const createChatCompletion = async (
       );
 
       if (functionCalls.length === 0) {
+        if (response.status !== 'completed') {
+          logger.error(
+            {
+              status: response.status,
+              reason: response.incomplete_details?.reason,
+              responseId: response.id,
+            },
+            'OpenAI response did not complete'
+          );
+          throw unavailable('AI_RESPONSE_INCOMPLETE');
+        }
+
         return {
-          text: response.output_text,
+          text: extractReplyText(response),
           responseId: response.id,
           usage: {
             promptTokens: response.usage?.input_tokens,
