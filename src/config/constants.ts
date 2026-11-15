@@ -7,3 +7,7 @@ export const AUTH_COOKIES = {
 
 export const ACCESS_TOKEN_TYPE = 'access';
 export const REFRESH_TOKEN_TYPE = 'refresh';
+
+export const CHAT_MAX_MESSAGE_LENGTH = 2000;
+export const CHAT_HISTORY_LIMIT = 20;
+export const CHAT_LIST_MAX_LIMIT = 50;
