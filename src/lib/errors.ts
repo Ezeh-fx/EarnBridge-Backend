@@ -47,6 +47,10 @@ export class AppError extends Error {
     return new AppError(HttpStatus.TOO_MANY_REQUESTS, code, message);
   }
 
+  static serviceUnavailable(code: string, message: string): AppError {
+    return new AppError(HttpStatus.SERVICE_UNAVAILABLE, code, message);
+  }
+
   static internal(code: string, message: string): AppError {
     return new AppError(
       HttpStatus.INTERNAL_SERVER_ERROR,
