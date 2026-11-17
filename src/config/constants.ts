@@ -8,6 +8,9 @@ export const AUTH_COOKIES = {
 export const ACCESS_TOKEN_TYPE = 'access';
 export const REFRESH_TOKEN_TYPE = 'refresh';
 
+export const EMAIL_VERIFICATION_OTP_TTL_MINUTES = 10;
+export const PASSWORD_RESET_TTL_MINUTES = 30;
+
 export const CHAT_MAX_MESSAGE_LENGTH = 2000;
 export const CHAT_HISTORY_LIMIT = 20;
 export const CHAT_LIST_MAX_LIMIT = 50;

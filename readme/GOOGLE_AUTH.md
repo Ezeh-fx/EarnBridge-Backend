@@ -65,23 +65,15 @@ The raw ID token is never logged. Verification failures are logged at
 - `GOOGLE_AUTH_FAILED` (500) — Google transport/provider failure
   (e.g. network error); distinct from invalid credentials
 
-## Consuming the Service Later
+## Consuming the Service
 
-The future `POST /v1/auth/google` controller will receive `{ idToken }`
-from the client, validate the body with Zod, then call:
+`POST /v1/auth/google` receives `{ idToken }` from the client, validates the
+body with Zod, verifies it with `verifyGoogleIdToken`, then delegates account
+creation/session issuance to `src/services/user.service.ts`.
 
-```ts
-import { verifyGoogleIdToken } from '../lib/google';
-
-const googleUser = await verifyGoogleIdToken(body.idToken);
-// googleUser.googleId -> User.googleId lookup or creation
-// googleUser.email   -> account email (already verified by Google)
-```
-
-Rules for that future workflow (per AGENTS.md): find-or-create the user
-by `googleId` (never auto-link by email alone), issue the standard
-access/refresh token pair, and set auth cookies — reusing the existing
-auth utilities. Do not duplicate JWT logic.
+The implemented workflow follows these rules: find-or-create the user by
+`googleId` (never auto-link by email alone), issue the standard access/refresh
+token pair, and set auth cookies.
 
 ## Tests
 

@@ -18,3 +18,13 @@ export interface AuthenticatedUser {
   role: UserRole;
   status: 'active' | 'suspended' | 'deleted';
 }
+
+export interface PublicUser {
+  id: string;
+  publicId: string;
+  email: string;
+  displayName?: string;
+  avatarUrl?: string;
+  role: UserRole;
+  emailVerified: boolean;
+}

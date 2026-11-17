@@ -17,6 +17,7 @@ import {
 import { xssSanitizer } from './middleware/xss';
 import { arcjetMiddleware } from './lib/arcjet';
 import { sendData } from './lib/response';
+import { authRouter, meRouter } from './routes/user.routes';
 
 const app = express();
 
@@ -60,6 +61,16 @@ if (env.ARCJET_KEY) {
           res.status(HttpStatus.TOO_MANY_REQUESTS).json({ error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests' } });
           return;
         } else if (decision.reason.isBot()) {
+          const reason = decision.reason;
+          logger.warn(
+            {
+              deniedBots: reason.denied,
+              verified: reason.verified,
+              spoofed: reason.spoofed,
+              path: req.path,
+            },
+            'Arcjet bot detected'
+          );
           res.status(HttpStatus.FORBIDDEN).json({ error: { code: 'BLOCKED', message: 'Bot detected' } });
           return;
         } else {
@@ -105,6 +116,9 @@ app.get('/health', (_req, res) => {
     );
   }
 });
+
+app.use('/v1/auth', authRouter);
+app.use('/v1/me', meRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
