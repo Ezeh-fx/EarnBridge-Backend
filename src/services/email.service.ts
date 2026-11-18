@@ -209,14 +209,19 @@ let logoAttachmentPromise: Promise<EmailAttachment[]> | undefined;
 const getLogoAttachments = (): Promise<EmailAttachment[]> => {
   logoAttachmentPromise ??= readFile(
     fileURLToPath(new URL('./email/templates/earnbridge-logo.png', import.meta.url))
-  ).then((content) => [
-    {
-      filename: 'earnbridge-logo.png',
-      content,
-      cid: EMAIL_LOGO_CID,
-      contentType: 'image/png',
-    },
-  ]);
+  )
+    .then((content) => [
+      {
+        filename: 'earnbridge-logo.png',
+        content,
+        cid: EMAIL_LOGO_CID,
+        contentType: 'image/png',
+      },
+    ])
+    .catch((err) => {
+      logoAttachmentPromise = undefined;
+      throw err;
+    });
   return logoAttachmentPromise;
 };
 

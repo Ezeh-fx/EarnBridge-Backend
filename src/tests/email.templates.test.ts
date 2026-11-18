@@ -24,7 +24,7 @@ describe('renderEmailTemplate', () => {
     expect(result.html).toContain('EarnBridge &amp; Co');
     expect(result.html).toContain('expires in 10 minutes');
     expect(result.html).toContain('cid:earnbridge-logo');
-    expect(result.html).toContain('#16a34a');
+    expect(result.html).toContain('#15803d');
     expect(result.text).toContain('123456');
     expect(result.text).toContain('EarnBridge & Co');
   });

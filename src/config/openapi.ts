@@ -62,12 +62,13 @@ const jsonBody = (schema: Record<string, unknown>) => ({
   required: true,
   content: {
     'application/json': {
-      schema: { type: 'object', ...schema },
+      schema: { type: 'object', ...schema, additionalProperties: false },
     },
   },
 });
 
 const cookieAuth = [{ cookieAuth: [] }];
+const refreshCookieAuth = [{ refreshCookieAuth: [] }];
 
 export const openApiSpec = {
   openapi: '3.0.3',
@@ -89,6 +90,11 @@ export const openApiSpec = {
         type: 'apiKey',
         in: 'cookie',
         name: AUTH_COOKIES.accessToken,
+      },
+      refreshCookieAuth: {
+        type: 'apiKey',
+        in: 'cookie',
+        name: AUTH_COOKIES.refreshToken,
       },
     },
     schemas: {
@@ -148,8 +154,10 @@ export const openApiSpec = {
         }),
         responses: {
           201: dataResponse(messageSchema, 'Verification OTP sent'),
+          403: errorResponse,
           422: errorResponse,
           429: errorResponse,
+          503: errorResponse,
         },
       },
     },
@@ -172,7 +180,10 @@ export const openApiSpec = {
             properties: { user: { $ref: '#/components/schemas/PublicUser' } },
           }),
           400: errorResponse,
+          403: errorResponse,
           422: errorResponse,
+          429: errorResponse,
+          503: errorResponse,
         },
       },
     },
@@ -198,6 +209,7 @@ export const openApiSpec = {
           403: errorResponse,
           422: errorResponse,
           429: errorResponse,
+          503: errorResponse,
         },
       },
     },
@@ -219,9 +231,11 @@ export const openApiSpec = {
             properties: { user: { $ref: '#/components/schemas/PublicUser' } },
           }),
           401: errorResponse,
+          403: errorResponse,
           409: errorResponse,
           422: errorResponse,
           429: errorResponse,
+          503: errorResponse,
         },
       },
     },
@@ -231,13 +245,15 @@ export const openApiSpec = {
         summary: 'Rotate the refresh token',
         description:
           'Reads the refresh token cookie, rotates it, and sets new auth cookies. Reusing a rotated token revokes the whole token family.',
-        security: cookieAuth,
+        security: refreshCookieAuth,
         responses: {
           200: dataResponse({
             type: 'object',
             properties: { user: { $ref: '#/components/schemas/PublicUser' } },
           }),
           401: errorResponse,
+          403: errorResponse,
+          429: errorResponse,
         },
       },
     },
@@ -245,8 +261,8 @@ export const openApiSpec = {
       post: {
         tags: ['auth'],
         summary: 'Log out',
-        description: 'Revokes the current refresh token and clears both auth cookies.',
-        security: cookieAuth,
+        description:
+          'Revokes the refresh token if its cookie is present (optional) and always clears both auth cookies.',
         responses: {
           200: dataResponse(messageSchema),
         },
@@ -264,8 +280,10 @@ export const openApiSpec = {
         }),
         responses: {
           200: dataResponse(messageSchema),
+          403: errorResponse,
           422: errorResponse,
           429: errorResponse,
+          503: errorResponse,
         },
       },
     },
@@ -291,7 +309,10 @@ export const openApiSpec = {
             properties: { valid: { type: 'boolean' } },
           }),
           400: errorResponse,
+          403: errorResponse,
           422: errorResponse,
+          429: errorResponse,
+          503: errorResponse,
         },
       },
     },
@@ -316,7 +337,10 @@ export const openApiSpec = {
         responses: {
           200: dataResponse(messageSchema),
           400: errorResponse,
+          403: errorResponse,
           422: errorResponse,
+          429: errorResponse,
+          503: errorResponse,
         },
       },
     },
@@ -352,7 +376,10 @@ export const openApiSpec = {
           200: dataResponse(messageSchema),
           400: errorResponse,
           401: errorResponse,
+          403: errorResponse,
           422: errorResponse,
+          429: errorResponse,
+          503: errorResponse,
         },
       },
     },
