@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { HttpStatus } from '../config/httpStatus';
+import { HttpStatus } from '../config/httpStatus.js';
 
 export interface ApiResponse<T> {
   data: T;

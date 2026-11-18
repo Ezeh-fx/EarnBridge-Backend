@@ -6,17 +6,17 @@ import {
   ACCESS_TOKEN_TYPE,
   EMAIL_VERIFICATION_OTP_TTL_MINUTES,
   PASSWORD_RESET_TTL_MINUTES,
-} from '../config/constants';
-import { env } from '../config/env';
-import { AppError } from '../lib/errors';
-import { verifyGoogleIdToken } from '../lib/google';
-import { RefreshToken } from '../models/refreshToken.model';
-import { User, type UserDocument } from '../models/user.model';
+} from '../config/constants.js';
+import { env } from '../config/env.js';
+import { AppError } from '../lib/errors.js';
+import { verifyGoogleIdToken } from '../lib/google.js';
+import { RefreshToken } from '../models/refreshToken.model.js';
+import { User, type UserDocument } from '../models/user.model.js';
 import {
   sendPasswordResetEmail,
   sendVerificationOTPEmail,
-} from './email.service';
-import type { PublicUser } from '../types/auth.types';
+} from './email.service.js';
+import type { PublicUser } from '../types/auth.types.js';
 import type {
   ChangePasswordInput,
   ForgotPasswordInput,
@@ -26,7 +26,7 @@ import type {
   ResetPasswordInput,
   VerifyOtpInput,
   VerifyResetTokenInput,
-} from '../types/user.types';
+} from '../types/user.types.js';
 
 export interface AuthSession {
   accessToken: string;

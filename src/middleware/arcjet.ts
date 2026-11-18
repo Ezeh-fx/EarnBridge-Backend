@@ -1,9 +1,9 @@
 import type { ArcjetNode } from '@arcjet/node';
 import { Request, Response, NextFunction } from 'express';
-import { env } from '../config/env';
-import { logger } from '../config/logger';
-import { AppError } from '../lib/errors';
-import { asyncHandler } from './asyncHandler';
+import { env } from '../config/env.js';
+import { logger } from '../config/logger.js';
+import { AppError } from '../lib/errors.js';
+import { asyncHandler } from './asyncHandler.js';
 
 interface ArcjetProtectOptions {
   failClosed?: boolean;

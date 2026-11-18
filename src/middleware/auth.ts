@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
-import { AUTH_COOKIES, ACCESS_TOKEN_TYPE } from '../config/constants';
-import { AppError } from '../lib/errors';
-import { User } from '../models/user.model';
-import type { AccessTokenPayload, AuthenticatedUser } from '../types/auth.types';
-import { asyncHandler } from './asyncHandler';
+import { env } from '../config/env.js';
+import { AUTH_COOKIES, ACCESS_TOKEN_TYPE } from '../config/constants.js';
+import { AppError } from '../lib/errors.js';
+import { User } from '../models/user.model.js';
+import type { AccessTokenPayload, AuthenticatedUser } from '../types/auth.types.js';
+import { asyncHandler } from './asyncHandler.js';
 
 const isAccessTokenPayload = (payload: unknown): payload is AccessTokenPayload => {
   if (typeof payload !== 'object' || payload === null) {

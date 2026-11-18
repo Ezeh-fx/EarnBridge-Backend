@@ -1,8 +1,8 @@
 import dns from 'node:dns';
 import mongoose from 'mongoose';
 
-import { env } from '../config/env';
-import {logger} from '../config/logger';
+import { env } from '../config/env.js';
+import {logger} from '../config/logger.js';
 
 if (env.NODE_ENV === 'development' && env.DNS_SERVERS) {
   const dnsServers = env.DNS_SERVERS

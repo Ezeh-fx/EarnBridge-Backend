@@ -4,12 +4,12 @@ import { createHash, randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { app } from '../app';
-import { ACCESS_TOKEN_TYPE, AUTH_COOKIES } from '../config/constants';
-import { env } from '../config/env';
-import { AppError } from '../lib/errors';
-import { RefreshToken } from '../models/refreshToken.model';
-import { User } from '../models/user.model';
+import { app } from '../app.js';
+import { ACCESS_TOKEN_TYPE, AUTH_COOKIES } from '../config/constants.js';
+import { env } from '../config/env.js';
+import { AppError } from '../lib/errors.js';
+import { RefreshToken } from '../models/refreshToken.model.js';
+import { User } from '../models/user.model.js';
 
 const mocks = vi.hoisted(() => ({
   sendVerificationOTPEmail: vi.fn(),

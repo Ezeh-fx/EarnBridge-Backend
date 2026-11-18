@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { env } from '../config/env';
-import { logger } from '../config/logger';
-import { sanitizeEmailError } from '../lib/email/errors';
+import { env } from '../config/env.js';
+import { logger } from '../config/logger.js';
+import { sanitizeEmailError } from '../lib/email/errors.js';
 import {
   sendNotificationEmail,
   verifyEmailConnection,
-} from '../services/email.service';
+} from '../services/email.service.js';
 
 const recipientSchema = z.string().trim().email();
 

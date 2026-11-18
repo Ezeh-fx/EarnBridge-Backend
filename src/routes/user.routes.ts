@@ -11,17 +11,17 @@ import {
   resetPassword,
   verifyOtp,
   verifyResetToken,
-} from '../controllers/user.controller';
+} from '../controllers/user.controller.js';
 import {
   emailVerificationRateLimit,
   loginRateLimit,
   passwordResetRateLimit,
   refreshRateLimit,
   registerRateLimit,
-} from '../lib/arcjet';
-import { arcjetProtect } from '../middleware/arcjet';
-import { requireAuth } from '../middleware/auth';
-import { validateBody } from '../middleware/validate';
+} from '../lib/arcjet.js';
+import { arcjetProtect } from '../middleware/arcjet.js';
+import { requireAuth } from '../middleware/auth.js';
+import { validateBody } from '../middleware/validate.js';
 import {
   changePasswordSchema,
   emptyBodySchema,
@@ -32,7 +32,7 @@ import {
   resetPasswordSchema,
   verifyOtpSchema,
   verifyResetTokenSchema,
-} from '../types/user.types';
+} from '../types/user.types.js';
 
 const registerGuard = arcjetProtect(registerRateLimit, { failClosed: true });
 const emailVerificationGuard = arcjetProtect(emailVerificationRateLimit, {

@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { env } from '../config/env';
-import { HttpStatus } from '../config/httpStatus';
-import { logger } from '../config/logger';
-import { AppError } from '../lib/errors';
+import { env } from '../config/env.js';
+import { HttpStatus } from '../config/httpStatus.js';
+import { logger } from '../config/logger.js';
+import { AppError } from '../lib/errors.js';
 import {
   getEmailErrorCode,
   getEmailErrorResponseCode,
@@ -13,8 +13,8 @@ import {
   type EmailAttachment,
   type EmailDeliveryMetadata,
   type EmailProvider,
-} from '../lib/email';
-import { renderEmailTemplate } from './email.templates';
+} from '../lib/email/index.js';
+import { renderEmailTemplate } from './email.templates.js';
 
 const emailAddressSchema = z.string().trim().email().max(320);
 const hasNoLineBreaks = (value: string): boolean => !/[\r\n]/.test(value);

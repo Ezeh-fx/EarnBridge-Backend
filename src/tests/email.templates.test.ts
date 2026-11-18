@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { AppError } from '../lib/errors';
+import { AppError } from '../lib/errors.js';
 import {
   renderEmailTemplate,
   type EmailTemplateName,
-} from '../services/email.templates';
+} from '../services/email.templates.js';
 
 const baseData = {
   appName: 'EarnBridge & Co',

@@ -1,6 +1,6 @@
-import { env } from '../../config/env';
-import { createNodemailerEmailProvider } from './nodemailerProvider';
-import type { EmailProvider } from './types';
+import { env } from '../../config/env.js';
+import { createNodemailerEmailProvider } from './nodemailerProvider.js';
+import type { EmailProvider } from './types.js';
 
 let emailProvider: EmailProvider | undefined;
 

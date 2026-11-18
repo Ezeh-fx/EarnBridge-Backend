@@ -3,8 +3,8 @@ import { ZodError } from 'zod';
 import type {
   EmailDeliveryMetadata,
   EmailProvider,
-} from '../lib/email';
-import { createEmailService } from '../services/email.service';
+} from '../lib/email/index.js';
+import { createEmailService } from '../services/email.service.js';
 
 const createProvider = () => {
   const sendEmail = vi.fn<EmailProvider['sendEmail']>(

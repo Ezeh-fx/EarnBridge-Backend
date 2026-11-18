@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from '../config/env';
-import { verifyGoogleIdToken } from '../lib/google';
+import { env } from '../config/env.js';
+import { verifyGoogleIdToken } from '../lib/google.js';
 
 const mocks = vi.hoisted(() => ({
   verifyIdToken: vi.fn(),
