@@ -26,10 +26,16 @@ const normalizeError = (err: unknown): NormalizedError => {
   }
 
   if (err instanceof ZodError) {
+    const firstIssue = err.issues[0];
+    const field = firstIssue?.path?.join('.') || 'body';
+    const message = firstIssue
+      ? `Validation failed: ${field}: ${firstIssue.message}`
+      : 'Validation failed';
+
     return {
       statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
       code: 'VALIDATION_ERROR',
-      message: 'Validation failed',
+      message,
       isOperational: true,
     };
   }
@@ -137,6 +143,7 @@ export const errorHandler = (
         statusCode: normalized.statusCode,
         method: req.method,
         path: req.path,
+        issues: err instanceof ZodError ? err.issues : undefined,
       },
       'Request error'
     );

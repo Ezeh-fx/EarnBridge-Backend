@@ -54,4 +54,9 @@ const userSchema = new Schema<UserDocument>(
   { timestamps: true },
 );
 
+userSchema.index(
+  { passwordResetTokenHash: 1, passwordResetExpiresAt: 1 },
+  { sparse: true }
+);
+
 export const User = model<UserDocument>('User', userSchema);

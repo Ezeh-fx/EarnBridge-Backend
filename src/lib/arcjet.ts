@@ -8,7 +8,7 @@ const aj = arcjet({
       mode: 'LIVE',
     }),
     detectBot({
-      mode: 'LIVE',
+      mode: env.NODE_ENV === 'production' ? 'LIVE' : 'DRY_RUN',
       allow: [],
     }),
   ],
@@ -61,4 +61,21 @@ export const chatRateLimit = aj.withRule(
   })
 );
 
+export const emailVerificationRateLimit = aj.withRule(
+  tokenBucket({
+    mode: 'LIVE',
+    refillRate: 3,
+    interval: 60,
+    capacity: 5,
+  })
+);
+
+export const passwordResetRateLimit = aj.withRule(
+  tokenBucket({
+    mode: 'LIVE',
+    refillRate: 3,
+    interval: 60,
+    capacity: 5,
+  })
+);
 

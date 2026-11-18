@@ -21,7 +21,7 @@ Earnbridge is an AI rewards web app where users earn money by completing offers 
 - **Language**: TypeScript (strict mode, ESM only)
 - **Database**: MongoDB (Atlas, replica set required for transactions) + Mongoose
 - **Validation**: Zod
-- **Authentication**: Custom (jsonwebtoken, bcryptjs, cookie-parser, google-auth-library)
+- **Authentication**: Custom (jsonwebtoken, argon2, cookie-parser, google-auth-library)
 - **Security**: Arcjet, helmet, cors, hpp, express-mongo-sanitize
 - **Logging**: Pino with pino-pretty for development
 - **Testing**: Vitest + supertest + mongodb-memory-server
@@ -216,7 +216,7 @@ After completing each full feature, create a README in the `readme/` folder expl
 ## Important Notes
 
 - **Node Version**: Arcjet requires Node 22.21.0+. Current setup may show warnings on Node 20.
-- **bcryptjs vs argon2**: Using bcryptjs (pure-JS) instead of argon2 to avoid native compilation issues on Windows.
+- **Password Hashing**: argon2 is used for password and OTP hashing per AGENTS.md.
 - **MongoDB**: Requires replica set for transactions (required for money operations).
 - **Callback Route**: Arcjet bot rules NOT applied to `/v1/callbacks/ayet` (ayeT servers look like bots).
 - **No Third-Party Auth**: Using custom authentication, not Clerk or Auth0.
