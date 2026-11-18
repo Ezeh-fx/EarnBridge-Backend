@@ -104,6 +104,10 @@ app.use(hpp());
 
 app.use(requestLogger);
 
+app.get('/', (_req, res) => {
+  sendData(res, { message: 'Welcome to EarnBridge 🎉🎉' });
+});
+
 // Health check endpoint
 app.get('/health', (_req, res) => {
   const isDbConnected = mongoose.connection.readyState === 1;
