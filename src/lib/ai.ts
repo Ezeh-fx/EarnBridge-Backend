@@ -4,9 +4,9 @@ import OpenAI, {
   APIError,
 } from 'openai';
 import { toResponseInputItems } from 'openai/lib/responses/ResponseInputItems';
-import { env } from '../config/env';
-import { logger } from '../config/logger';
-import { AppError } from './errors';
+import { env } from '../config/env.js';
+import { logger } from '../config/logger.js';
+import { AppError } from './errors.js';
 
 export type AiFunctionTool = OpenAI.Responses.FunctionTool;
 export type AiResponseInputItem = OpenAI.Responses.ResponseInputItem;

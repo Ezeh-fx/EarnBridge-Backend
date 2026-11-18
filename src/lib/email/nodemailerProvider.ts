@@ -4,7 +4,7 @@ import type {
   EmailDeliveryMetadata,
   EmailMessage,
   EmailProvider,
-} from './types';
+} from './types.js';
 
 export interface SmtpEmailProviderConfig {
   host: string;

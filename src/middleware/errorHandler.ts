@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { AppError } from '../lib/errors';
-import { HttpStatus } from '../config/httpStatus';
-import { env } from '../config/env';
-import { logger } from '../config/logger';
+import { AppError } from '../lib/errors.js';
+import { HttpStatus } from '../config/httpStatus.js';
+import { env } from '../config/env.js';
+import { logger } from '../config/logger.js';
 
 interface NormalizedError {
   statusCode: number;

@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { env } from '../config/env';
-import { Conversation } from '../models/conversation.model';
-import { Message } from '../models/message.model';
-import { User } from '../models/user.model';
-import { listChatMessages, sendChatMessage } from '../services/chat.service';
+import { env } from '../config/env.js';
+import { Conversation } from '../models/conversation.model.js';
+import { Message } from '../models/message.model.js';
+import { User } from '../models/user.model.js';
+import { listChatMessages, sendChatMessage } from '../services/chat.service.js';
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),

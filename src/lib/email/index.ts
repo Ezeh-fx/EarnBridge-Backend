@@ -1,11 +1,11 @@
-export * from './types';
+export * from './types.js';
 export {
   getEmailErrorCode,
   getEmailErrorResponseCode,
   sanitizeEmailError,
-} from './errors';
-export type { SanitizedEmailError } from './errors';
-export { getEmailProvider } from './provider';
+} from './errors.js';
+export type { SanitizedEmailError } from './errors.js';
+export { getEmailProvider } from './provider.js';
 export {
   buildSmtpTransportOptions,
   createNodemailerEmailProvider,
@@ -13,9 +13,9 @@ export {
   SMTP_CONNECTION_TIMEOUT_MS,
   SMTP_GREETING_TIMEOUT_MS,
   SMTP_SOCKET_TIMEOUT_MS,
-} from './nodemailerProvider';
+} from './nodemailerProvider.js';
 export type {
   EmailTransport,
   EmailTransportSendInfo,
   SmtpEmailProviderConfig,
-} from './nodemailerProvider';
+} from './nodemailerProvider.js';

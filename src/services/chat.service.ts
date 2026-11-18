@@ -4,16 +4,16 @@ import {
   CHAT_HISTORY_LIMIT,
   CHAT_LIST_MAX_LIMIT,
   CHAT_MAX_MESSAGE_LENGTH,
-} from '../config/constants';
-import { env } from '../config/env';
+} from '../config/constants.js';
+import { env } from '../config/env.js';
 import {
   createChatCompletion,
   type AiResponseInputItem,
-} from '../lib/ai';
-import { AppError } from '../lib/errors';
-import { Conversation } from '../models/conversation.model';
-import { Message, type MessageDocument } from '../models/message.model';
-import type { MessageRole } from '../models/message.model';
+} from '../lib/ai.js';
+import { AppError } from '../lib/errors.js';
+import { Conversation } from '../models/conversation.model.js';
+import { Message, type MessageDocument } from '../models/message.model.js';
+import type { MessageRole } from '../models/message.model.js';
 
 const objectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/);
 

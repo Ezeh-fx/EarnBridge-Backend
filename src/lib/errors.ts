@@ -1,4 +1,4 @@
-import { HttpStatus } from '../config/httpStatus';
+import { HttpStatus } from '../config/httpStatus.js';
 
 export class AppError extends Error {
   public readonly statusCode: number;

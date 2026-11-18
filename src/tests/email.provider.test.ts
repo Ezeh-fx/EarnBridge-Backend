@@ -5,11 +5,11 @@ import {
   SMTP_CONNECTION_TIMEOUT_MS,
   SMTP_GREETING_TIMEOUT_MS,
   SMTP_SOCKET_TIMEOUT_MS,
-} from '../lib/email/nodemailerProvider';
+} from '../lib/email/nodemailerProvider.js';
 import type {
   EmailTransport,
   SmtpEmailProviderConfig,
-} from '../lib/email/nodemailerProvider';
+} from '../lib/email/nodemailerProvider.js';
 
 const config: SmtpEmailProviderConfig = {
   host: 'smtp.gmail.com',

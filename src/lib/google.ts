@@ -1,7 +1,7 @@
 import { OAuth2Client } from 'google-auth-library';
-import { env } from '../config/env';
-import { logger } from '../config/logger';
-import { AppError } from './errors';
+import { env } from '../config/env.js';
+import { logger } from '../config/logger.js';
+import { AppError } from './errors.js';
 
 export interface GoogleVerifiedUser {
   googleId: string;

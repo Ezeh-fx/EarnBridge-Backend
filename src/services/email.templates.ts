@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import ejs from 'ejs';
-import { env } from '../config/env';
-import { logger } from '../config/logger';
-import { AppError } from '../lib/errors';
-import { sanitizeEmailError } from '../lib/email/errors';
+import { env } from '../config/env.js';
+import { logger } from '../config/logger.js';
+import { AppError } from '../lib/errors.js';
+import { sanitizeEmailError } from '../lib/email/errors.js';
 
 export type EmailTemplateName =
   | 'verification-otp'

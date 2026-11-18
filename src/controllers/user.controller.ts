@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { AUTH_COOKIES } from '../config/constants';
-import { env } from '../config/env';
-import { HttpStatus } from '../config/httpStatus';
-import { sendData } from '../lib/response';
-import { asyncHandler } from '../middleware/asyncHandler';
+import { AUTH_COOKIES } from '../config/constants.js';
+import { env } from '../config/env.js';
+import { HttpStatus } from '../config/httpStatus.js';
+import { sendData } from '../lib/response.js';
+import { asyncHandler } from '../middleware/asyncHandler.js';
 import {
   changePassword as changePasswordService,
   forgotPassword as forgotPasswordService,
@@ -17,7 +17,7 @@ import {
   verifyEmailOtp,
   verifyPasswordResetToken,
   type AuthSession,
-} from '../services/user.service';
+} from '../services/user.service.js';
 import type {
   ChangePasswordInput,
   ForgotPasswordInput,
@@ -27,7 +27,7 @@ import type {
   ResetPasswordInput,
   VerifyOtpInput,
   VerifyResetTokenInput,
-} from '../types/user.types';
+} from '../types/user.types.js';
 
 const cookieOptions = () => ({
   httpOnly: true,

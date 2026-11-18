@@ -1,4 +1,4 @@
-import { AUTH_COOKIES } from './constants';
+import { AUTH_COOKIES } from './constants.js';
 
 const errorResponse = {
   description: 'Error',

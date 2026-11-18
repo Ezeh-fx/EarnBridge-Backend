@@ -7,19 +7,19 @@ import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
 import compression from 'compression';
 import mongoose from 'mongoose';
-import { env } from './config/env';
-import { logger } from './config/logger';
-import { HttpStatus } from './config/httpStatus';
-import { requestLogger } from './middleware/logger';
+import { env } from './config/env.js';
+import { logger } from './config/logger.js';
+import { HttpStatus } from './config/httpStatus.js';
+import { requestLogger } from './middleware/logger.js';
 import {
   errorHandler,
   notFoundHandler,
-} from './middleware/errorHandler';
-import { xssSanitizer } from './middleware/xss';
-import { arcjetMiddleware } from './lib/arcjet';
-import { sendData } from './lib/response';
-import { openApiSpec } from './config/openapi';
-import { authRouter, meRouter } from './routes/user.routes';
+} from './middleware/errorHandler.js';
+import { xssSanitizer } from './middleware/xss.js';
+import { arcjetMiddleware } from './lib/arcjet.js';
+import { sendData } from './lib/response.js';
+import { openApiSpec } from './config/openapi.js';
+import { authRouter, meRouter } from './routes/user.routes.js';
 
 const app = express();
 

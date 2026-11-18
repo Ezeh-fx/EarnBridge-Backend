@@ -1,5 +1,5 @@
 import type { Types } from 'mongoose';
-import type { UserRole } from '../models/user.model';
+import type { UserRole } from '../models/user.model.js';
 
 export interface AccessTokenPayload {
   sub: string;
