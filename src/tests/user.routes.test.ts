@@ -356,6 +356,10 @@ describe('user auth routes', { timeout: 20000 }, () => {
     await agent.post('/v1/auth/refresh').expect(401);
   });
 
+  it('serves the Swagger UI docs', async () => {
+    await request(app).get('/docs/').expect(200);
+  });
+
   it('returns the current user for an authenticated request', async () => {
     await createVerifiedUser();
     const loginRes = await login().expect(200);

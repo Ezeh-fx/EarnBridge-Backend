@@ -9,6 +9,7 @@ const baseData = {
   appName: 'EarnBridge & Co',
   clientUrl: 'http://localhost:5173/account?source=email&campaign=test',
   currentYear: 2026,
+  logoCid: 'earnbridge-logo',
 };
 
 describe('renderEmailTemplate', () => {
@@ -22,6 +23,8 @@ describe('renderEmailTemplate', () => {
     expect(result.html).toContain('123456');
     expect(result.html).toContain('EarnBridge &amp; Co');
     expect(result.html).toContain('expires in 10 minutes');
+    expect(result.html).toContain('cid:earnbridge-logo');
+    expect(result.html).toContain('#15803d');
     expect(result.text).toContain('123456');
     expect(result.text).toContain('EarnBridge & Co');
   });

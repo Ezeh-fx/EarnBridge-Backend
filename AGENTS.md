@@ -156,6 +156,10 @@ Withdrawal, Conversation, Message, SupportTicket.
   a maximum limit.
 - Never return fields the client does not need (password hashes,
   token hashes, internal flags).
+- Every endpoint must be documented in `src/config/openapi.ts`
+  (OpenAPI 3.0). Swagger UI is served at `/docs`. When adding or
+  changing an endpoint, update the spec in the same change so the
+  frontend can consume it without reading the code.
 
 ---
 
@@ -542,7 +546,8 @@ After completing each full feature (e.g., authentication, wallet, offerwall inte
    - Security considerations specific to the feature
    - Testing approach and coverage
 3. Name the README file descriptively (e.g., `AUTHENTICATION.md`, `WALLET.md`, `OFFERWALL.md`).
-4. Keep documentation updated when the feature changes.
+4. Keep documentation updated when the feature changes, including
+   `src/config/openapi.ts` for API contract changes.
 
 ---
 
