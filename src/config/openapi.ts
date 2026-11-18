@@ -116,6 +116,19 @@ export const openApiSpec = {
     },
   },
   paths: {
+    '/': {
+      get: {
+        tags: ['health'],
+        summary: 'Welcome message',
+        responses: {
+          200: dataResponse({
+            type: 'object',
+            properties: { message: { type: 'string' } },
+            required: ['message'],
+          }),
+        },
+      },
+    },
     '/health': {
       get: {
         tags: ['health'],

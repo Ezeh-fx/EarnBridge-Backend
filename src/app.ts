@@ -105,7 +105,7 @@ app.use(hpp());
 app.use(requestLogger);
 
 app.get('/', (_req, res) => {
-  res.type('text/plain').send('Welcome to EarnBridge 🎉🎉');
+  sendData(res, { message: 'Welcome to EarnBridge 🎉🎉' });
 });
 
 // Health check endpoint
