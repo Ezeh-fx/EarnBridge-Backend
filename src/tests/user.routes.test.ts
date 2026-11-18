@@ -1,9 +1,12 @@
 import mongoose from 'mongoose';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
+import { createHash, randomUUID } from 'node:crypto';
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { app } from '../app';
-import { AUTH_COOKIES } from '../config/constants';
+import { ACCESS_TOKEN_TYPE, AUTH_COOKIES } from '../config/constants';
+import { env } from '../config/env';
 import { AppError } from '../lib/errors';
 import { RefreshToken } from '../models/refreshToken.model';
 import { User } from '../models/user.model';
@@ -175,6 +178,27 @@ describe('user auth routes', { timeout: 20000 }, () => {
       });
   });
 
+  it('binds a re-registration OTP to the latest submitted password', async () => {
+    await request(app)
+      .post('/v1/auth/register')
+      .send(registerBody)
+      .expect(201);
+
+    const newPassword = 'new-password123';
+    await request(app)
+      .post('/v1/auth/register')
+      .send({ ...registerBody, password: newPassword })
+      .expect(201);
+
+    await request(app)
+      .post('/v1/auth/verify-otp')
+      .send({ email: registerBody.email, otp: sentOtp })
+      .expect(200);
+
+    await login(registerBody.email, newPassword).expect(200);
+    await login(registerBody.email, registerBody.password).expect(401);
+  });
+
   it('logs in a verified user and sets auth cookies', async () => {
     await createVerifiedUser();
 
@@ -240,6 +264,30 @@ describe('user auth routes', { timeout: 20000 }, () => {
     await request(app).post('/v1/auth/refresh').expect(401);
   });
 
+  it('rejects an expired refresh token without creating a session', async () => {
+    await createVerifiedUser();
+    const user = await User.findOne({ email: registerBody.email });
+    const token = 'expired-refresh-token';
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    await RefreshToken.create({
+      user: user!._id,
+      tokenHash,
+      familyId: randomUUID(),
+      expiresAt: new Date(Date.now() - 1_000),
+    });
+
+    await request(app)
+      .post('/v1/auth/refresh')
+      .set('Cookie', `${AUTH_COOKIES.refreshToken}=${token}`)
+      .expect(401)
+      .expect((res) => {
+        expect(res.body.error.code).toBe('REFRESH_TOKEN_EXPIRED');
+      });
+
+    expect(await RefreshToken.countDocuments({})).toBe(1);
+  });
+
   it('revokes the refresh token family when a used token is replayed', async () => {
     await createVerifiedUser();
     const loginRes = await login().expect(200);
@@ -263,6 +311,28 @@ describe('user auth routes', { timeout: 20000 }, () => {
     expect(tokens.every((token) => token.revokedAt instanceof Date)).toBe(true);
   });
 
+  it('allows only one concurrent refresh with the same token', async () => {
+    await createVerifiedUser();
+    const loginRes = await login().expect(200);
+    const refreshCookie = cookieValue(loginRes, AUTH_COOKIES.refreshToken);
+    expect(refreshCookie).toBeDefined();
+
+    const [first, second] = await Promise.all([
+      request(app)
+        .post('/v1/auth/refresh')
+        .set('Cookie', refreshCookie as string),
+      request(app)
+        .post('/v1/auth/refresh')
+        .set('Cookie', refreshCookie as string),
+    ]);
+
+    expect([first.status, second.status].sort()).toEqual([200, 401]);
+
+    const tokens = await RefreshToken.find({}).sort({ createdAt: 1 });
+    expect(tokens).toHaveLength(2);
+    expect(tokens.filter((token) => token.usedAt)).toHaveLength(1);
+  });
+
   it('logs out and revokes the current refresh token', async () => {
     await createVerifiedUser();
     const agent = request.agent(app);
@@ -271,7 +341,15 @@ describe('user auth routes', { timeout: 20000 }, () => {
       .post('/v1/auth/login')
       .send({ email: registerBody.email, password: registerBody.password })
       .expect(200);
-    await agent.post('/v1/auth/logout').expect(200);
+    const logoutRes = await agent.post('/v1/auth/logout').expect(200);
+
+    const setCookies = logoutRes.headers['set-cookie'];
+    const headers = Array.isArray(setCookies) ? setCookies : [setCookies];
+    for (const name of [AUTH_COOKIES.accessToken, AUTH_COOKIES.refreshToken]) {
+      const cleared = headers.find((cookie) => cookie.startsWith(`${name}=`));
+      expect(cleared).toBeDefined();
+      expect(cleared).toContain('Expires=Thu, 01 Jan 1970');
+    }
 
     const token = await RefreshToken.findOne({});
     expect(token?.revokedAt).toBeInstanceOf(Date);
@@ -294,6 +372,29 @@ describe('user auth routes', { timeout: 20000 }, () => {
 
   it('rejects /v1/me without an access token', async () => {
     await request(app).get('/v1/me').expect(401);
+  });
+
+  it('rejects /v1/me with an expired access token', async () => {
+    await createVerifiedUser();
+    const user = await User.findOne({ email: registerBody.email });
+    const expiredToken = jwt.sign(
+      {
+        sub: user!._id.toString(),
+        publicId: user!.publicId,
+        role: user!.role,
+        type: ACCESS_TOKEN_TYPE,
+        exp: Math.floor(Date.now() / 1000) - 60,
+      },
+      env.JWT_ACCESS_SECRET
+    );
+
+    await request(app)
+      .get('/v1/me')
+      .set('Cookie', `${AUTH_COOKIES.accessToken}=${expiredToken}`)
+      .expect(401)
+      .expect((res) => {
+        expect(res.body.error.code).toBe('INVALID_TOKEN');
+      });
   });
 
   it('sends a password reset email with a reset link', async () => {

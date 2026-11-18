@@ -115,6 +115,7 @@ export const registerUser = async (input: RegisterInput): Promise<void> => {
       existing.passwordHash &&
       !existing.emailVerifiedAt
     ) {
+      existing.passwordHash = await argon2.hash(input.password);
       await sendVerificationOtp(existing);
     }
     return;
@@ -146,6 +147,7 @@ export const registerUser = async (input: RegisterInput): Promise<void> => {
       racedUser.passwordHash &&
       !racedUser.emailVerifiedAt
     ) {
+      racedUser.passwordHash = await argon2.hash(input.password);
       await sendVerificationOtp(racedUser);
     }
   }
@@ -336,10 +338,14 @@ const revokeRefreshTokenFamily = async (familyId: string): Promise<void> => {
   );
 };
 
-const revokeAllRefreshTokens = async (userId: Types.ObjectId | string) => {
+const revokeAllRefreshTokens = async (
+  userId: Types.ObjectId | string,
+  session?: ClientSession
+) => {
   await RefreshToken.updateMany(
     { user: userId, revokedAt: { $exists: false } },
-    { $set: { revokedAt: new Date() } }
+    { $set: { revokedAt: new Date() } },
+    session ? { session } : undefined
   );
 };
 
@@ -403,6 +409,18 @@ export const refreshSession = async (
         familyId: existing.familyId,
       });
     });
+  } catch (err) {
+    if (err instanceof AppError && err.code === 'INVALID_REFRESH_TOKEN') {
+      const latest = await RefreshToken.findById(existing._id);
+      if (latest?.usedAt || latest?.revokedAt) {
+        await revokeRefreshTokenFamily(latest.familyId);
+        throw AppError.unauthorized(
+          'REFRESH_TOKEN_REUSED',
+          'Refresh token reuse detected'
+        );
+      }
+    }
+    throw err;
   } finally {
     await session.endSession();
   }
@@ -491,30 +509,38 @@ export const resetPassword = async (
   input: ResetPasswordInput
 ): Promise<void> => {
   const passwordHash = await argon2.hash(input.newPassword);
-  const user = await User.findOneAndUpdate(
-    {
-      passwordResetTokenHash: sha256(input.token),
-      passwordResetExpiresAt: { $gt: new Date() },
-      status: 'active',
-    },
-    {
-      $set: { passwordHash },
-      $unset: {
-        passwordResetTokenHash: '',
-        passwordResetExpiresAt: '',
-      },
-    },
-    { returnDocument: 'after' }
-  );
+  const session = await mongoose.startSession();
 
-  if (!user) {
-    throw AppError.badRequest(
-      'INVALID_RESET_TOKEN',
-      'Invalid or expired reset token'
-    );
+  try {
+    await session.withTransaction(async () => {
+      const user = await User.findOneAndUpdate(
+        {
+          passwordResetTokenHash: sha256(input.token),
+          passwordResetExpiresAt: { $gt: new Date() },
+          status: 'active',
+        },
+        {
+          $set: { passwordHash },
+          $unset: {
+            passwordResetTokenHash: '',
+            passwordResetExpiresAt: '',
+          },
+        },
+        { returnDocument: 'after', session }
+      );
+
+      if (!user) {
+        throw AppError.badRequest(
+          'INVALID_RESET_TOKEN',
+          'Invalid or expired reset token'
+        );
+      }
+
+      await revokeAllRefreshTokens(user._id, session);
+    });
+  } finally {
+    await session.endSession();
   }
-
-  await revokeAllRefreshTokens(user._id);
 };
 
 export const changePassword = async (
@@ -539,8 +565,8 @@ export const changePassword = async (
   }
 
   const passwordHash = await argon2.hash(input.newPassword);
-  await User.updateOne(
-    { _id: user._id },
+  const result = await User.updateOne(
+    { _id: user._id, passwordHash: user.passwordHash },
     {
       $set: { passwordHash },
       $unset: {
@@ -549,5 +575,13 @@ export const changePassword = async (
       },
     }
   );
+
+  if (result.matchedCount === 0) {
+    throw AppError.badRequest(
+      'INVALID_CURRENT_PASSWORD',
+      'Current password is incorrect'
+    );
+  }
+
   await revokeAllRefreshTokens(user._id);
 };
