@@ -65,6 +65,7 @@ export const createNodemailerEmailProvider = (
       subject: message.subject,
       html: message.html,
       text: message.text,
+      attachments: message.attachments,
     });
 
     return {

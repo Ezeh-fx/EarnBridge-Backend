@@ -1,5 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import mongoSanitize from 'express-mongo-sanitize';
@@ -17,6 +18,7 @@ import {
 import { xssSanitizer } from './middleware/xss';
 import { arcjetMiddleware } from './lib/arcjet';
 import { sendData } from './lib/response';
+import { openApiSpec } from './config/openapi';
 import { authRouter, meRouter } from './routes/user.routes';
 
 const app = express();
@@ -119,6 +121,14 @@ app.get('/health', (_req, res) => {
 
 app.use('/v1/auth', authRouter);
 app.use('/v1/me', meRouter);
+
+app.use(
+  '/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(openApiSpec, {
+    customSiteTitle: 'EarnBridge API Docs',
+  })
+);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

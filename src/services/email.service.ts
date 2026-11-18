@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { env } from '../config/env';
 import { HttpStatus } from '../config/httpStatus';
@@ -8,6 +10,7 @@ import {
   getEmailErrorResponseCode,
   getEmailProvider,
   sanitizeEmailError,
+  type EmailAttachment,
   type EmailDeliveryMetadata,
   type EmailProvider,
 } from '../lib/email';
@@ -36,6 +39,19 @@ const sendEmailSchema = z
       .min(3)
       .max(320)
       .refine(hasNoLineBreaks, 'Sender must be a single line')
+      .optional(),
+    attachments: z
+      .array(
+        z
+          .object({
+            filename: z.string().min(1).max(255),
+            content: z.instanceof(Buffer),
+            cid: z.string().min(1).max(255),
+            contentType: z.string().max(100).optional(),
+          })
+          .strict()
+      )
+      .max(5)
       .optional(),
   })
   .strict();
@@ -183,7 +199,26 @@ const baseTemplateData = (): Record<string, unknown> => ({
   appName: env.EMAIL_APP_NAME,
   clientUrl: env.CLIENT_URL,
   currentYear: new Date().getFullYear(),
+  logoCid: EMAIL_LOGO_CID,
 });
+
+export const EMAIL_LOGO_CID = 'earnbridge-logo';
+
+let logoAttachmentPromise: Promise<EmailAttachment[]> | undefined;
+
+const getLogoAttachments = (): Promise<EmailAttachment[]> => {
+  logoAttachmentPromise ??= readFile(
+    fileURLToPath(new URL('./email/templates/earnbridge-logo.png', import.meta.url))
+  ).then((content) => [
+    {
+      filename: 'earnbridge-logo.png',
+      content,
+      cid: EMAIL_LOGO_CID,
+      contentType: 'image/png',
+    },
+  ]);
+  return logoAttachmentPromise;
+};
 
 export const createEmailService = (provider?: EmailProvider): EmailService => {
   const getProvider = (): EmailProvider => provider ?? getEmailProvider();
@@ -228,6 +263,7 @@ export const createEmailService = (provider?: EmailProvider): EmailService => {
       subject: `Your ${env.EMAIL_APP_NAME} verification code`,
       html,
       text,
+      attachments: await getLogoAttachments(),
     });
   };
 
@@ -252,6 +288,7 @@ export const createEmailService = (provider?: EmailProvider): EmailService => {
       subject: `Reset your ${env.EMAIL_APP_NAME} password`,
       html,
       text,
+      attachments: await getLogoAttachments(),
     });
   };
 
@@ -272,6 +309,7 @@ export const createEmailService = (provider?: EmailProvider): EmailService => {
       subject: input.subject,
       html,
       text,
+      attachments: await getLogoAttachments(),
     });
   };
 
