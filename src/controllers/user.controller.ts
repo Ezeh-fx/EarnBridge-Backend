@@ -32,7 +32,10 @@ import type {
 const cookieOptions = () => ({
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  // 'none' is required for cross-site frontend/API in production, but
+  // browsers reject SameSite=None without Secure, so dev stays 'lax'
+  // (localhost frontend and API are same-site anyway).
+  sameSite: (env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
   path: '/',
 });
 
