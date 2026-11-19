@@ -117,6 +117,11 @@ export const registerUser = async (input: RegisterInput): Promise<void> => {
     ) {
       existing.passwordHash = await argon2.hash(input.password);
       await sendVerificationOtp(existing);
+    } else {
+      throw AppError.conflict(
+        'USER_EXISTS',
+        'User already exists and is verified'
+      );
     }
     return;
   }
