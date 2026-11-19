@@ -16,6 +16,7 @@ import {
   notFoundHandler,
 } from './middleware/errorHandler.js';
 import { xssSanitizer } from './middleware/xss.js';
+import { csrfProtection } from './middleware/csrf.js';
 import { arcjetMiddleware } from './lib/arcjet.js';
 import { sendData } from './lib/response.js';
 import { openApiSpec } from './config/openapi.js';
@@ -101,6 +102,7 @@ app.use(
   })
 );
 app.use(hpp());
+app.use('/v1', csrfProtection);
 
 app.use(requestLogger);
 

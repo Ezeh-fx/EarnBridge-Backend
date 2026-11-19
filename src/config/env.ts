@@ -45,7 +45,7 @@ const httpUrlSchema = z
   .refine(isHttpUrl, 'URL must use HTTP or HTTPS');
 
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z.enum(['development', 'production', 'test']),
   PORT: z.string().default('3000'),
   TRUST_PROXY: z.coerce.number().int().min(0).default(1),
   MONGODB_URI: z.preprocess(preprocessEmptyString, z.string().url()),
