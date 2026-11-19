@@ -29,7 +29,7 @@ export const arcjetProtect = (
 
     let decision;
     try {
-      decision = await client.protect(req);
+      decision = await client.protect(req, { requested: 1 });
     } catch (err) {
       if (options.failClosed) {
         logger.error({ err }, 'Arcjet protect failed, failing closed');
