@@ -17,8 +17,10 @@ if (env.NODE_ENV === 'development' && env.DNS_SERVERS) {
 }
 
 export const connectDatabase = async (): Promise<void> => {
-  mongoose.set('sanitizeFilter', true);
-
+  // NOTE: mongoose sanitizeFilter is intentionally NOT enabled — it wraps
+  // any filter value containing $-operators in $eq, which breaks legitimate
+  // queries like { expiresAt: { $gt: date } } and { revokedAt: { $exists: false } }.
+  // Injection protection lives in express-mongo-sanitize + Zod validation.
   await mongoose.connect(env.MONGODB_URI);
   logger.info('MongoDB connected');
 };
