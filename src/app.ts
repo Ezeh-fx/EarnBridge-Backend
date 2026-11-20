@@ -7,6 +7,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
 import compression from 'compression';
 import mongoose from 'mongoose';
+import { fileURLToPath } from 'node:url';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { HttpStatus } from './config/httpStatus.js';
@@ -39,9 +40,13 @@ app.use(
     contentSecurityPolicy: env.NODE_ENV === 'production' ? undefined : false,
   })
 );
+const corsOrigins = env.FRONTEND_ORIGIN.split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: env.FRONTEND_ORIGIN,
+    origin: corsOrigins,
     credentials: true,
   })
 );
@@ -52,7 +57,11 @@ app.use(compression());
 // server-to-server callbacks are automated clients that must never see bot rules.
 if (env.ARCJET_KEY) {
   app.use(async (req, res, next) => {
-    if (req.path === '/health' || req.path.startsWith('/v1/callbacks')) {
+    if (
+      req.path === '/health' ||
+      req.path.startsWith('/v1/callbacks') ||
+      req.path.startsWith('/email-assets')
+    ) {
       next();
       return;
     }
@@ -108,6 +117,16 @@ app.use(requestLogger);
 
 app.get('/', (_req, res) => {
   sendData(res, { message: 'Welcome to EarnBridge 🎉🎉' });
+});
+
+// Public email logo, referenced by absolute URL in outgoing emails
+// (works for both SMTP and API providers; CID inline images are not portable).
+const emailLogoPath = fileURLToPath(
+  new URL('./services/email/templates/earnbridge-logo.png', import.meta.url)
+);
+app.get('/email-assets/earnbridge-logo.png', (_req, res) => {
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.sendFile(emailLogoPath);
 });
 
 // Health check endpoint

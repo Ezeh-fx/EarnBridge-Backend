@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { env } from '../config/env.js';
 import { HttpStatus } from '../config/httpStatus.js';
@@ -10,7 +8,6 @@ import {
   getEmailErrorResponseCode,
   getEmailProvider,
   sanitizeEmailError,
-  type EmailAttachment,
   type EmailDeliveryMetadata,
   type EmailProvider,
 } from '../lib/email/index.js';
@@ -199,31 +196,8 @@ const baseTemplateData = (): Record<string, unknown> => ({
   appName: env.EMAIL_APP_NAME,
   clientUrl: env.CLIENT_URL,
   currentYear: new Date().getFullYear(),
-  logoCid: EMAIL_LOGO_CID,
+  logoUrl: env.EMAIL_LOGO_URL,
 });
-
-export const EMAIL_LOGO_CID = 'earnbridge-logo';
-
-let logoAttachmentPromise: Promise<EmailAttachment[]> | undefined;
-
-const getLogoAttachments = (): Promise<EmailAttachment[]> => {
-  logoAttachmentPromise ??= readFile(
-    fileURLToPath(new URL('./email/templates/earnbridge-logo.png', import.meta.url))
-  )
-    .then((content) => [
-      {
-        filename: 'earnbridge-logo.png',
-        content,
-        cid: EMAIL_LOGO_CID,
-        contentType: 'image/png',
-      },
-    ])
-    .catch((err) => {
-      logoAttachmentPromise = undefined;
-      throw err;
-    });
-  return logoAttachmentPromise;
-};
 
 export const createEmailService = (provider?: EmailProvider): EmailService => {
   const getProvider = (): EmailProvider => provider ?? getEmailProvider();
@@ -268,7 +242,6 @@ export const createEmailService = (provider?: EmailProvider): EmailService => {
       subject: `Your ${env.EMAIL_APP_NAME} verification code`,
       html,
       text,
-      attachments: await getLogoAttachments(),
     });
   };
 
@@ -293,7 +266,6 @@ export const createEmailService = (provider?: EmailProvider): EmailService => {
       subject: `Reset your ${env.EMAIL_APP_NAME} password`,
       html,
       text,
-      attachments: await getLogoAttachments(),
     });
   };
 
@@ -314,7 +286,6 @@ export const createEmailService = (provider?: EmailProvider): EmailService => {
       subject: input.subject,
       html,
       text,
-      attachments: await getLogoAttachments(),
     });
   };
 

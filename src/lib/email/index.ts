@@ -7,6 +7,11 @@ export {
 export type { SanitizedEmailError } from './errors.js';
 export { getEmailProvider } from './provider.js';
 export {
+  createBrevoEmailProvider,
+  BREVO_REQUEST_TIMEOUT_MS,
+} from './brevoProvider.js';
+export type { BrevoEmailProviderConfig } from './brevoProvider.js';
+export {
   buildSmtpTransportOptions,
   createNodemailerEmailProvider,
   createSmtpTransporter,
