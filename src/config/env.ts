@@ -100,8 +100,14 @@ const envSchema = z.object({
   EMAIL_HOST: z.string().trim().min(1).max(253).default('smtp.gmail.com'),
   EMAIL_PORT: z.coerce.number().int().min(1).max(65535).default(465),
   EMAIL_SECURE: z.preprocess(preprocessBoolean, z.boolean().default(true)),
-  EMAIL_USER: z.string().trim().email(),
-  EMAIL_PASSWORD: z.string().min(1),
+  EMAIL_USER: z.preprocess(
+    preprocessEmptyString,
+    z.string().trim().email().optional()
+  ),
+  EMAIL_PASSWORD: z.preprocess(
+    preprocessEmptyString,
+    z.string().min(1).optional()
+  ),
   EMAIL_FROM: z.string().trim().email(),
   EMAIL_FROM_NAME: z.preprocess(
     preprocessEmptyString,
@@ -140,6 +146,23 @@ const envSchema = z.object({
       message: 'BREVO_API_KEY is required when EMAIL_PROVIDER is brevo',
       path: ['BREVO_API_KEY'],
     });
+  }
+
+  if (data.EMAIL_PROVIDER === 'smtp') {
+    if (!data.EMAIL_USER) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'EMAIL_USER is required when EMAIL_PROVIDER is smtp',
+        path: ['EMAIL_USER'],
+      });
+    }
+    if (!data.EMAIL_PASSWORD) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'EMAIL_PASSWORD is required when EMAIL_PROVIDER is smtp',
+        path: ['EMAIL_PASSWORD'],
+      });
+    }
   }
 
   if (data.ACCESS_TOKEN_COOKIE_NAME === data.REFRESH_TOKEN_COOKIE_NAME) {

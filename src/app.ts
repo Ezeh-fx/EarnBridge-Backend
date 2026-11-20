@@ -126,6 +126,9 @@ const emailLogoPath = fileURLToPath(
 );
 app.get('/email-assets/earnbridge-logo.png', (_req, res) => {
   res.set('Cache-Control', 'public, max-age=86400');
+  // Helmet sets Cross-Origin-Resource-Policy: same-origin globally; email
+  // clients fetch this image cross-origin, so allow it here only.
+  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
   res.sendFile(emailLogoPath);
 });
 

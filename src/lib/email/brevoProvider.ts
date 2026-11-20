@@ -27,13 +27,6 @@ const parseFromAddress = (from: string): { email: string; name?: string } => {
   return { email: from.trim() };
 };
 
-const toProviderError = (err: unknown): ProviderError => {
-  if (err instanceof Error) {
-    return err as ProviderError;
-  }
-  return new Error(String(err)) as ProviderError;
-};
-
 const requestError = (
   status: number,
   message: string
@@ -64,7 +57,13 @@ const fetchBrevo = async (
       signal: AbortSignal.timeout(config.timeoutMs),
     });
   } catch (err) {
-    const providerErr = toProviderError(err);
+    // Always wrap: AbortSignal.timeout rejects with a DOMException whose
+    // legacy `code` property is read-only, so it cannot carry our SMTP-style
+    // error code. Preserve the original as `cause`.
+    const providerErr = new Error(
+      err instanceof Error ? err.message : String(err),
+      { cause: err }
+    ) as ProviderError;
     providerErr.code =
       err instanceof Error && err.name === 'TimeoutError'
         ? 'ETIMEDOUT'

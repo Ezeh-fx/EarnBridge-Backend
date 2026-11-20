@@ -14,7 +14,9 @@ const main = async (): Promise<void> => {
     throw new Error('Email smoke test is disabled in production');
   }
 
-  const recipient = recipientSchema.parse(process.argv[2] ?? env.EMAIL_USER);
+  const recipient = recipientSchema.parse(
+    process.argv[2] ?? env.EMAIL_USER ?? env.EMAIL_FROM
+  );
 
   await verifyEmailConnection();
 

@@ -22,6 +22,11 @@ export const getEmailProvider = (): EmailProvider => {
         fromName: env.EMAIL_FROM_NAME ?? env.EMAIL_APP_NAME,
       });
     } else {
+      if (!env.EMAIL_USER || !env.EMAIL_PASSWORD) {
+        throw new Error(
+          'EMAIL_USER and EMAIL_PASSWORD are required for the smtp email provider'
+        );
+      }
       emailProvider = createNodemailerEmailProvider({
         host: env.EMAIL_HOST,
         port: env.EMAIL_PORT,
