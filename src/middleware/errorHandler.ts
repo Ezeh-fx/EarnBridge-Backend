@@ -144,6 +144,14 @@ export const errorHandler = (
         method: req.method,
         path: req.path,
         issues: err instanceof ZodError ? err.issues : undefined,
+        castError:
+          isRecord(err) && err.name === 'CastError'
+            ? {
+                path: typeof err.path === 'string' ? err.path : undefined,
+                value:
+                  typeof err.value === 'string' ? err.value.slice(0, 100) : undefined,
+              }
+            : undefined,
       },
       'Request error'
     );
