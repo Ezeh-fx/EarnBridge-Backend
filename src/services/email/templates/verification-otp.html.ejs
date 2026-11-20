@@ -19,7 +19,7 @@
   <body>
     <div class="wrapper">
       <div class="card">
-        <img class="logo" src="cid:<%= logoCid %>" alt="<%= appName %>" width="190" />
+        <% if (logoUrl) { %><img class="logo" src="<%= logoUrl %>" alt="<%= appName %>" width="190" /><% } %>
         <h1>Verify your email</h1>
         <p>Use this verification code to finish setting up your <%= appName %> account:</p>
         <div class="code"><%= otp %></div>

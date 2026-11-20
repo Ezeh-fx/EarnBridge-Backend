@@ -4,10 +4,16 @@ import { AppError } from '../lib/errors.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+const toOriginList = (value: string): string[] =>
+  value
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+
 const allowedOrigins = new Set(
-  [env.FRONTEND_ORIGIN, env.CLIENT_URL]
-    .filter((origin): origin is string => Boolean(origin))
-    .map((origin) => origin.replace(/\/+$/, ''))
+  [env.FRONTEND_ORIGIN, env.CLIENT_URL].flatMap((value) =>
+    value ? toOriginList(value) : []
+  )
 );
 
 // CSRF guard for cookie-authenticated requests. Production auth cookies use
