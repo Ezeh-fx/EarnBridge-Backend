@@ -344,14 +344,95 @@ describe('ayet callback routes', { timeout: 30000 }, () => {
 
   it('acknowledges malformed callbacks without crediting', async () => {
     const rawQuery = callbackQuery({
-      transaction_id: 'tx-bad',
       external_identifier: 'someone',
-      // payout_usd intentionally missing
+      payout_usd: '0.36',
       callback_type: 'conversion',
+      // transaction_id intentionally missing: no dedupe key exists, so the
+      // verified callback cannot be persisted.
     });
 
     const res = await signedGet(rawQuery).expect(200);
     expect(res.body.data.status).toBe('malformed');
     expect(await CallbackEvent.countDocuments({})).toBe(0);
+  });
+
+  it('records verified financial callbacks with a missing or invalid payout', async () => {
+    const user = await createVerifiedUser('badpayout@example.com');
+
+    const missing = await signedGet(
+      callbackQuery({
+        transaction_id: 'tx-no-payout',
+        external_identifier: user.publicId,
+        callback_type: 'conversion',
+      })
+    ).expect(200);
+    expect(missing.body.data.status).toBe('error');
+
+    const invalid = await signedGet(
+      callbackQuery(
+        conversionParams(user.publicId, {
+          transaction_id: 'tx-bad-payout',
+          payout_usd: 'not-a-number',
+        })
+      )
+    ).expect(200);
+    expect(invalid.body.data.status).toBe('error');
+
+    expect(await LedgerEntry.countDocuments({})).toBe(0);
+    const events = await CallbackEvent.find({}).sort({ createdAt: 1 });
+    expect(events).toHaveLength(2);
+    expect(events.map((e) => e.error)).toEqual([
+      'INVALID_PAYOUT',
+      'INVALID_PAYOUT',
+    ]);
+    expect(events[0].status).toBe('error');
+  });
+
+  it('applies a reversal that arrived before its reward', async () => {
+    const user = await createVerifiedUser('earlyrev@example.com');
+
+    const reversalQuery = callbackQuery(
+      conversionParams(user.publicId, {
+        transaction_id: 'r-tx-early',
+        payout_usd: '-0.36',
+        is_chargeback: '1',
+        callback_type: 'chargeback',
+      })
+    );
+    const early = await signedGet(reversalQuery).expect(200);
+    expect(early.body.data.status).toBe('error');
+
+    const pending = await CallbackEvent.findOne({});
+    expect(pending?.status).toBe('error');
+    expect(pending?.error).toBe('ORIGINAL_NOT_FOUND');
+
+    const reward = await signedGet(
+      callbackQuery(
+        conversionParams(user.publicId, { transaction_id: 'tx-early' })
+      )
+    ).expect(200);
+    expect(reward.body.data.status).toBe('processed');
+
+    const wallet = await Wallet.findOne({ user: user._id });
+    expect(wallet?.availableMicroUsd).toBe(0);
+
+    const reversalEntry = await LedgerEntry.findOne({ type: 'reversal' });
+    expect(reversalEntry?.amountMicroUsd).toBe(-CREDIT_036);
+    expect(reversalEntry?.relatedEntryId).toBeDefined();
+
+    const reconciled = await CallbackEvent.findOne({
+      transactionId: 'r-tx-early',
+    });
+    expect(reconciled?.status).toBe('processed');
+    expect(reconciled?.ledgerEntryId?.toString()).toBe(
+      reversalEntry!._id.toString()
+    );
+
+    // A resent reversal must not debit a second time.
+    const resend = await signedGet(reversalQuery).expect(200);
+    expect(resend.body.data.status).toBe('duplicate');
+    const walletAfter = await Wallet.findOne({ user: user._id });
+    expect(walletAfter?.availableMicroUsd).toBe(0);
+    expect(await LedgerEntry.countDocuments({ type: 'reversal' })).toBe(1);
   });
 });
