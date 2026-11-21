@@ -26,6 +26,7 @@ import type {
   ResetPasswordInput,
   VerifyOtpInput,
   VerifyResetTokenInput,
+  UpdateProfileInput,
 } from '../types/user.types.js';
 
 export interface AuthSession {
@@ -87,6 +88,13 @@ const toPublicUser = (user: UserDocument): PublicUser => ({
 const invalidCredentials = (): AppError =>
   AppError.unauthorized('INVALID_CREDENTIALS', 'Invalid email or password');
 
+let dummyPasswordHash: string | undefined;
+
+const getDummyPasswordHash = async (): Promise<string> => {
+  dummyPasswordHash ??= await argon2.hash('timing-equalization-placeholder');
+  return dummyPasswordHash;
+};
+
 const isDuplicateKeyError = (err: unknown): boolean =>
   typeof err === 'object' &&
   err !== null &&
@@ -117,11 +125,6 @@ export const registerUser = async (input: RegisterInput): Promise<void> => {
     ) {
       existing.passwordHash = await argon2.hash(input.password);
       await sendVerificationOtp(existing);
-    } else {
-      throw AppError.conflict(
-        'USER_EXISTS',
-        'User already exists and is verified'
-      );
     }
     return;
   }
@@ -197,15 +200,12 @@ export const loginUser = async (
     '+passwordHash'
   );
 
-  if (!user?.passwordHash) {
-    throw invalidCredentials();
-  }
-
+  const passwordHash = user?.passwordHash ?? (await getDummyPasswordHash());
   const passwordMatches = await argon2
-    .verify(user.passwordHash, input.password)
+    .verify(passwordHash, input.password)
     .catch(() => false);
 
-  if (!passwordMatches) {
+  if (!user?.passwordHash || !passwordMatches) {
     throw invalidCredentials();
   }
 
@@ -622,4 +622,48 @@ export const deleteUser = async (
   } finally {
     await session.endSession();
   }
+};
+
+export const updateProfile = async (
+  userId: Types.ObjectId | string,
+  input: UpdateProfileInput
+): Promise<PublicUser> => {
+  const user = await User.findById(userId);
+
+  if (!user || user.status !== 'active') {
+    throw AppError.unauthorized('UNAUTHORIZED', 'Authentication required');
+  }
+
+  const newEmail = input.email;
+  const emailChanged = newEmail !== undefined && newEmail !== user.email;
+
+  if (emailChanged) {
+    const existing = await User.findOne({ email: newEmail }).select('_id');
+    if (existing) {
+      throw AppError.conflict('EMAIL_TAKEN', 'Email is already in use');
+    }
+    user.email = newEmail;
+    user.emailVerifiedAt = undefined;
+  }
+
+  if (input.displayName !== undefined) {
+    user.displayName = input.displayName;
+  }
+
+  try {
+    if (emailChanged) {
+      // Saves the user (new email, cleared verification, OTP fields) then
+      // emails the OTP to the new address.
+      await sendVerificationOtp(user);
+    } else {
+      await user.save();
+    }
+  } catch (err) {
+    if (isDuplicateKeyError(err)) {
+      throw AppError.conflict('EMAIL_TAKEN', 'Email is already in use');
+    }
+    throw err;
+  }
+
+  return toPublicUser(user);
 };

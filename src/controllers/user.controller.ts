@@ -15,6 +15,7 @@ import {
   refreshSession,
   registerUser,
   resetPassword as resetPasswordService,
+  updateProfile,
   verifyEmailOtp,
   verifyPasswordResetToken,
   type AuthSession,
@@ -28,6 +29,7 @@ import type {
   ResetPasswordInput,
   VerifyOtpInput,
   VerifyResetTokenInput,
+  UpdateProfileInput,
 } from '../types/user.types.js';
 
 const cookieOptions = () => ({
@@ -115,6 +117,16 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
   const user = await getMe(req.user!.id);
   sendData(res, { user });
 });
+
+export const updateProfileHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const user = await updateProfile(
+      req.user!.id,
+      req.body as UpdateProfileInput
+    );
+    sendData(res, { user });
+  }
+);
 
 export const deleteAccount = asyncHandler(
   async (req: Request, res: Response) => {
