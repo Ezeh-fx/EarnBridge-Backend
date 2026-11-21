@@ -370,6 +370,20 @@ export const openApiSpec = {
           401: errorResponse,
         },
       },
+      delete: {
+        tags: ['me'],
+        summary: 'Delete the current user account',
+        description:
+          'Soft-deletes the account, revokes all sessions, clears auth cookies, and removes stored credentials and reset/verification secrets. Ledger, callback, and withdrawal records are retained.',
+        security: cookieAuth,
+        responses: {
+          200: dataResponse(messageSchema),
+          401: errorResponse,
+          404: errorResponse,
+          429: errorResponse,
+          503: errorResponse,
+        },
+      },
     },
     '/v1/me/password': {
       post: {

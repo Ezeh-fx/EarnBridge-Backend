@@ -590,3 +590,36 @@ export const changePassword = async (
 
   await revokeAllRefreshTokens(user._id);
 };
+
+export const deleteUser = async (
+  userId: Types.ObjectId | string
+): Promise<void> => {
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      const result = await User.updateOne(
+        { _id: userId, status: 'active' },
+        {
+          $set: { status: 'deleted', deletedAt: new Date() },
+          $unset: {
+            passwordHash: '',
+            emailVerificationOtpHash: '',
+            emailVerificationOtpExpiresAt: '',
+            passwordResetTokenHash: '',
+            passwordResetExpiresAt: '',
+          },
+        },
+        { session }
+      );
+
+      if (result.matchedCount === 0) {
+        throw AppError.notFound('USER_NOT_FOUND', 'User not found');
+      }
+
+      await revokeAllRefreshTokens(userId, session);
+    });
+  } finally {
+    await session.endSession();
+  }
+};

@@ -378,6 +378,40 @@ describe('user auth routes', { timeout: 20000 }, () => {
     await request(app).get('/v1/me').expect(401);
   });
 
+  it('deletes the account, revokes sessions, and blocks further auth', async () => {
+    await createVerifiedUser();
+    const agent = request.agent(app);
+
+    await agent
+      .post('/v1/auth/login')
+      .send({ email: registerBody.email, password: registerBody.password })
+      .expect(200);
+
+    const deleteRes = await agent.delete('/v1/me').expect(200);
+    expect(deleteRes.body.data.message).toBe('Account deleted');
+
+    const user = await User.findOne({ email: registerBody.email }).select(
+      '+passwordHash'
+    );
+    expect(user?.status).toBe('deleted');
+    expect(user?.deletedAt).toBeInstanceOf(Date);
+    expect(user?.passwordHash).toBeUndefined();
+
+    const tokens = await RefreshToken.find({});
+    expect(tokens.length).toBeGreaterThan(0);
+    for (const token of tokens) {
+      expect(token.revokedAt).toBeInstanceOf(Date);
+    }
+
+    await agent.get('/v1/me').expect(401);
+    await agent.post('/v1/auth/refresh').expect(401);
+    await login().expect(401);
+    await request(app)
+      .post('/v1/auth/register')
+      .send(registerBody)
+      .expect(409);
+  });
+
   it('rejects /v1/me with an expired access token', async () => {
     await createVerifiedUser();
     const user = await User.findOne({ email: registerBody.email });
