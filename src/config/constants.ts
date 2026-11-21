@@ -6,7 +6,6 @@ export const AUTH_COOKIES = {
 } as const;
 
 export const ACCESS_TOKEN_TYPE = 'access';
-export const REFRESH_TOKEN_TYPE = 'refresh';
 
 export const EMAIL_VERIFICATION_OTP_TTL_MINUTES = 10;
 export const PASSWORD_RESET_TTL_MINUTES = 30;

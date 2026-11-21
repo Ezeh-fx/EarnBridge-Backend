@@ -15,7 +15,10 @@ export interface WalletDocument extends IWallet, Document {
 const walletSchema = new Schema<WalletDocument>(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-    availableMicroUsd: { type: Number, required: true, default: 0, min: 0 },
+    // availableMicroUsd may go negative: reversals are always recorded even
+    // when they exceed the balance, and withdrawals are blocked until the
+    // balance is positive again.
+    availableMicroUsd: { type: Number, required: true, default: 0 },
     heldMicroUsd: { type: Number, required: true, default: 0, min: 0 },
   },
   { timestamps: true },

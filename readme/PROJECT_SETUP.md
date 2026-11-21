@@ -107,7 +107,6 @@ Key variables:
 - `PORT` - Server port (default: 3000)
 - `MONGODB_URI` - MongoDB connection string
 - `JWT_ACCESS_SECRET` - Access token secret (min 32 chars)
-- `JWT_REFRESH_SECRET` - Refresh token secret (min 32 chars)
 - `FRONTEND_ORIGIN` - Frontend URL for CORS
 - `ARCJET_KEY` - Arcjet API key (optional for dev)
 

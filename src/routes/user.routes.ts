@@ -10,10 +10,12 @@ import {
   refresh,
   register,
   resetPassword,
+  updateProfileHandler,
   verifyOtp,
   verifyResetToken,
 } from '../controllers/user.controller.js';
 import {
+  changePasswordRateLimit,
   emailVerificationRateLimit,
   loginRateLimit,
   passwordResetRateLimit,
@@ -31,11 +33,18 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  updateProfileSchema,
   verifyOtpSchema,
   verifyResetTokenSchema,
+  type RegisterInput,
 } from '../types/user.types.js';
 
-const registerGuard = arcjetProtect(registerRateLimit, { failClosed: true });
+// validateBody runs before the guard so the email rule receives a
+// validated string; malformed bodies are rejected before Arcjet runs.
+const registerGuard = arcjetProtect(registerRateLimit, {
+  failClosed: true,
+  props: (req) => ({ email: (req.body as RegisterInput).email }),
+});
 const emailVerificationGuard = arcjetProtect(emailVerificationRateLimit, {
   failClosed: true,
 });
@@ -44,16 +53,19 @@ const passwordResetGuard = arcjetProtect(passwordResetRateLimit, {
   failClosed: true,
 });
 const refreshGuard = arcjetProtect(refreshRateLimit, { failClosed: false });
-const changePasswordGuard = arcjetProtect(loginRateLimit, {
+const changePasswordGuard = arcjetProtect(changePasswordRateLimit, {
   failClosed: true,
+  props: (req) => ({
+    userId: req.user?.id.toString() ?? req.ip ?? 'unknown',
+  }),
 });
 
 export const authRouter = Router();
 
 authRouter.post(
   '/register',
-  registerGuard,
   validateBody(registerSchema),
+  registerGuard,
   register
 );
 authRouter.post(
@@ -98,6 +110,12 @@ authRouter.post('/logout', validateBody(emptyBodySchema), logout);
 export const meRouter = Router();
 
 meRouter.get('/', requireAuth, me);
+meRouter.patch(
+  '/',
+  requireAuth,
+  validateBody(updateProfileSchema),
+  updateProfileHandler
+);
 meRouter.delete(
   '/',
   requireAuth,

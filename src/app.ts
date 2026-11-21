@@ -22,6 +22,8 @@ import { arcjetMiddleware } from './lib/arcjet.js';
 import { sendData } from './lib/response.js';
 import { openApiSpec } from './config/openapi.js';
 import { authRouter, meRouter } from './routes/user.routes.js';
+import { offerwallRouter } from './routes/offerwall.routes.js';
+import { callbackRouter } from './routes/callback.routes.js';
 
 const app = express();
 
@@ -149,6 +151,8 @@ app.get('/health', (_req, res) => {
 
 app.use('/v1/auth', authRouter);
 app.use('/v1/me', meRouter);
+app.use('/v1/offerwall', offerwallRouter);
+app.use('/v1/callbacks', callbackRouter);
 
 app.use(
   '/docs',

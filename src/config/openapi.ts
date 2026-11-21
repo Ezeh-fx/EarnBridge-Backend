@@ -83,6 +83,8 @@ export const openApiSpec = {
     { name: 'health', description: 'Service health checks' },
     { name: 'auth', description: 'Registration, login, sessions, and password flows' },
     { name: 'me', description: 'Authenticated user endpoints' },
+    { name: 'offerwall', description: 'ayeT offerwall integration' },
+    { name: 'callbacks', description: 'ayeT server-to-server callbacks' },
   ],
   components: {
     securitySchemes: {
@@ -370,6 +372,31 @@ export const openApiSpec = {
           401: errorResponse,
         },
       },
+      patch: {
+        tags: ['me'],
+        summary: 'Update profile',
+        description:
+          'Update display name and/or email. Changing the email resets email verification and sends a new OTP to the new address; the user must verify it via /v1/auth/verify-otp.',
+        security: cookieAuth,
+        requestBody: jsonBody({
+          properties: {
+            email: { type: 'string', format: 'email' },
+            displayName: { type: 'string', minLength: 1, maxLength: 80 },
+          },
+        }),
+        responses: {
+          200: dataResponse({
+            type: 'object',
+            properties: { user: { $ref: '#/components/schemas/PublicUser' } },
+          }),
+          400: errorResponse,
+          401: errorResponse,
+          409: errorResponse,
+          422: errorResponse,
+          429: errorResponse,
+          503: errorResponse,
+        },
+      },
       delete: {
         tags: ['me'],
         summary: 'Delete the current user account',
@@ -406,6 +433,100 @@ export const openApiSpec = {
           403: errorResponse,
           422: errorResponse,
           429: errorResponse,
+          503: errorResponse,
+        },
+      },
+    },
+    '/v1/offerwall/link': {
+      get: {
+        tags: ['offerwall'],
+        summary: 'Get the ayeT offerwall URL',
+        description:
+          'Returns the Web Offerwall URL for the signed-in user. The externalIdentifier is the user\'s opaque public ID, which ayeT returns in callbacks.',
+        security: cookieAuth,
+        responses: {
+          200: dataResponse({
+            type: 'object',
+            properties: { url: { type: 'string', format: 'uri' } },
+            required: ['url'],
+          }),
+          401: errorResponse,
+          503: errorResponse,
+        },
+      },
+    },
+    '/v1/callbacks/ayet': {
+      get: {
+        tags: ['callbacks'],
+        summary: 'ayeT server-to-server callback',
+        description:
+          'Public endpoint called by ayeT servers for offerwall and rewarded video rewards. Protected by the X-Ayetstudios-Security-Hash HMAC signature and an optional IP allowlist; excluded from bot protection. Always returns 200 for verified callbacks, including duplicates and unprocessable ones, so ayeT does not retry. Configure the callback URL in the ayeT dashboard under Placements / Apps.',
+        parameters: [
+          {
+            name: 'transaction_id',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Unique transaction ID; reversals carry an r- prefix.',
+          },
+          {
+            name: 'external_identifier',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'The user public ID passed in the offerwall link.',
+          },
+          {
+            name: 'payout_usd',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Network payout in USD; negative for chargebacks.',
+          },
+          {
+            name: 'is_chargeback',
+            in: 'query',
+            schema: { type: 'string', enum: ['0', '1'] },
+          },
+          {
+            name: 'callback_type',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'conversion, chargeback, or an optional event type.',
+          },
+          {
+            name: 'is_sandbox',
+            in: 'query',
+            schema: { type: 'string', enum: ['0', '1'] },
+            description: '1 for sandbox test callbacks; never credits a reward.',
+          },
+          {
+            name: 'adslot_id',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Distinguishes offerwall and rewarded video adslots.',
+          },
+        ],
+        responses: {
+          200: dataResponse({
+            type: 'object',
+            properties: {
+              status: {
+                type: 'string',
+                enum: [
+                  'processed',
+                  'reversal_processed',
+                  'duplicate',
+                  'unknown_user',
+                  'ignored',
+                  'malformed',
+                  'error',
+                ],
+              },
+            },
+            required: ['status'],
+          }),
+          403: errorResponse,
           503: errorResponse,
         },
       },

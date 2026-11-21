@@ -59,6 +59,17 @@ export const resetPasswordSchema = z
 
 export const emptyBodySchema = z.object({}).strict().optional();
 
+export const updateProfileSchema = z
+  .object({
+    email: emailSchema.optional(),
+    displayName: z.string().trim().min(1).max(80).optional(),
+  })
+  .strict()
+  .refine(
+    (value) => value.email !== undefined || value.displayName !== undefined,
+    'At least one field is required'
+  );
+
 export const changePasswordSchema = z
   .object({
     oldPassword: passwordSchema,
@@ -74,3 +85,4 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type VerifyResetTokenInput = z.infer<typeof verifyResetTokenSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

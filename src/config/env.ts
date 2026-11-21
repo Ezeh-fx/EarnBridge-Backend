@@ -50,7 +50,6 @@ const envSchema = z.object({
   TRUST_PROXY: z.coerce.number().int().min(0).default(1),
   MONGODB_URI: z.preprocess(preprocessEmptyString, z.string().url()),
   JWT_ACCESS_SECRET: z.string().min(32),
-  JWT_REFRESH_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRY: z.string().default('15m'),
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
   ACCESS_TOKEN_COOKIE_NAME: z
@@ -66,6 +65,7 @@ const envSchema = z.object({
   ARCJET_KEY: z.string().optional(),
   ARCJET_ENV: z.enum(['development', 'production']).default('development'),
   AYET_ADSLOT_ID: z.string().optional(),
+  AYET_REWARDED_VIDEO_ADSLOT_ID: z.string().optional(),
   AYET_CALLBACK_SECRET: z.string().optional(),
   AYET_CALLBACK_IP_WHITELIST: z.string().optional(),
   REWARD_SHARE_BPS: z.coerce.number().int().min(0).max(10000).default(7000),

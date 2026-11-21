@@ -7,6 +7,7 @@ import { asyncHandler } from './asyncHandler.js';
 
 interface ArcjetProtectOptions {
   failClosed?: boolean;
+  props?: (req: Request) => Record<string, unknown>;
 }
 
 export const arcjetProtect = (
@@ -29,7 +30,10 @@ export const arcjetProtect = (
 
     let decision;
     try {
-      decision = await client.protect(req, { requested: 1 });
+      decision = await client.protect(req, {
+        requested: 1,
+        ...options.props?.(req),
+      });
     } catch (err) {
       if (options.failClosed) {
         logger.error({ err }, 'Arcjet protect failed, failing closed');

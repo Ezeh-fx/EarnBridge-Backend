@@ -145,6 +145,19 @@ describe('user auth routes', { timeout: 20000 }, () => {
       });
   });
 
+  it('returns a generic response when registering an already-verified email', async () => {
+    await createVerifiedUser();
+    mocks.sendVerificationOTPEmail.mockClear();
+
+    const res = await request(app)
+      .post('/v1/auth/register')
+      .send(registerBody)
+      .expect(201);
+
+    expect(res.body.data.message).toContain('verification code');
+    expect(mocks.sendVerificationOTPEmail).not.toHaveBeenCalled();
+  });
+
   it('verifies the registration OTP and marks the email verified', async () => {
     await request(app)
       .post('/v1/auth/register')
@@ -409,6 +422,68 @@ describe('user auth routes', { timeout: 20000 }, () => {
     await request(app)
       .post('/v1/auth/register')
       .send(registerBody)
+      .expect(201);
+  });
+
+  it('updates the display name without touching email verification', async () => {
+    await createVerifiedUser();
+    const loginRes = await login().expect(200);
+    const accessCookie = cookieValue(loginRes, AUTH_COOKIES.accessToken);
+    mocks.sendVerificationOTPEmail.mockClear();
+
+    const res = await request(app)
+      .patch('/v1/me')
+      .set('Cookie', accessCookie as string)
+      .send({ displayName: 'New Name' })
+      .expect(200);
+
+    expect(res.body.data.user.displayName).toBe('New Name');
+    expect(res.body.data.user.emailVerified).toBe(true);
+    expect(mocks.sendVerificationOTPEmail).not.toHaveBeenCalled();
+  });
+
+  it('resets verification and sends an OTP when the email changes', async () => {
+    await createVerifiedUser();
+    const loginRes = await login().expect(200);
+    const accessCookie = cookieValue(loginRes, AUTH_COOKIES.accessToken);
+    const newEmail = 'new-email@example.com';
+
+    const res = await request(app)
+      .patch('/v1/me')
+      .set('Cookie', accessCookie as string)
+      .send({ email: newEmail })
+      .expect(200);
+
+    expect(res.body.data.user.email).toBe(newEmail);
+    expect(res.body.data.user.emailVerified).toBe(false);
+    expect(mocks.sendVerificationOTPEmail).toHaveBeenCalledWith(
+      newEmail,
+      sentOtp,
+      expect.anything()
+    );
+
+    const user = await User.findOne({ email: newEmail });
+    expect(user?.emailVerifiedAt).toBeUndefined();
+
+    await request(app)
+      .post('/v1/auth/verify-otp')
+      .send({ email: newEmail, otp: sentOtp })
+      .expect(200);
+
+    const verified = await User.findById(user!._id);
+    expect(verified?.emailVerifiedAt).toBeInstanceOf(Date);
+  });
+
+  it('rejects a profile email that is already taken', async () => {
+    await createVerifiedUser();
+    await createVerifiedUser('other@example.com', 'password456');
+    const loginRes = await login().expect(200);
+    const accessCookie = cookieValue(loginRes, AUTH_COOKIES.accessToken);
+
+    await request(app)
+      .patch('/v1/me')
+      .set('Cookie', accessCookie as string)
+      .send({ email: 'other@example.com' })
       .expect(409);
   });
 

@@ -1,4 +1,9 @@
-import arcjet, { shield, tokenBucket, detectBot } from '@arcjet/node';
+import arcjet, {
+  shield,
+  tokenBucket,
+  detectBot,
+  validateEmail,
+} from '@arcjet/node';
 import { env } from '../config/env.js';
 
 const aj = arcjet({
@@ -25,14 +30,16 @@ export const loginRateLimit = aj.withRule(
   })
 );
 
-export const registerRateLimit = aj.withRule(
-  tokenBucket({
-    mode: 'LIVE',
-    refillRate: 3,
-    interval: 60,
-    capacity: 5,
-  })
-);
+export const registerRateLimit = aj
+  .withRule(validateEmail({ mode: 'LIVE', deny: ['DISPOSABLE', 'INVALID'] }))
+  .withRule(
+    tokenBucket({
+      mode: 'LIVE',
+      refillRate: 3,
+      interval: 60,
+      capacity: 5,
+    })
+  );
 
 export const refreshRateLimit = aj.withRule(
   tokenBucket({
@@ -76,6 +83,17 @@ export const passwordResetRateLimit = aj.withRule(
     refillRate: 3,
     interval: 60,
     capacity: 5,
+  })
+);
+
+// Authenticated route: keyed by user ID instead of IP.
+export const changePasswordRateLimit = aj.withRule(
+  tokenBucket({
+    mode: 'LIVE',
+    refillRate: 3,
+    interval: 60,
+    capacity: 5,
+    characteristics: ['userId'],
   })
 );
 
