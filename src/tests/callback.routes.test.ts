@@ -301,7 +301,7 @@ describe('ayet callback routes', { timeout: 30000 }, () => {
     expect(await LedgerEntry.countDocuments({})).toBe(0);
     const event = await CallbackEvent.findOne({});
     expect(event?.status).toBe('processed');
-    expect(event?.transactionId).toBe('tx-sandbox:sandbox');
+    expect(event?.transactionId).toBe('tx-sandbox:sandbox:conversion');
   });
 
   it('does not let optional event callbacks block the conversion', async () => {
@@ -317,6 +317,17 @@ describe('ayet callback routes', { timeout: 30000 }, () => {
       )
     ).expect(200);
 
+    // A different event type sharing the same transaction_id is a distinct
+    // notification and must also be recorded.
+    await signedGet(
+      callbackQuery(
+        conversionParams(user.publicId, {
+          transaction_id: 'tx-shared',
+          callback_type: 'iap',
+        })
+      )
+    ).expect(200);
+
     const res = await signedGet(
       callbackQuery(conversionParams(user.publicId, { transaction_id: 'tx-shared' }))
     ).expect(200);
@@ -324,7 +335,7 @@ describe('ayet callback routes', { timeout: 30000 }, () => {
 
     const entry = await LedgerEntry.findOne({});
     expect(entry?.amountMicroUsd).toBe(CREDIT_036);
-    expect(await CallbackEvent.countDocuments({})).toBe(2);
+    expect(await CallbackEvent.countDocuments({})).toBe(3);
   });
 
   it('does not credit callbacks from an unknown adslot', async () => {

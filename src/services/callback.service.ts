@@ -449,9 +449,12 @@ export const processAyetCallback = async (
     NON_FINANCIAL_CALLBACK_TYPES.has(fields.callbackType);
 
   if (fields.isSandbox || isEventCallback) {
+    // callback_type is part of the key so distinct event types sharing a
+    // transaction_id (e.g. optional vs iap) each get recorded, while an
+    // identical resend still dedupes.
     const dedupeTransactionId = `${fields.transactionId}:${
       fields.isSandbox ? 'sandbox' : 'event'
-    }`;
+    }:${fields.callbackType ?? 'none'}`;
     const user = await User.findOne({
       publicId: fields.externalIdentifier,
     }).select('_id');

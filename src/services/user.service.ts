@@ -643,7 +643,13 @@ export const updateProfile = async (
       throw AppError.conflict('EMAIL_TAKEN', 'Email is already in use');
     }
     user.email = newEmail;
-    user.emailVerifiedAt = undefined;
+    // Keep emailVerifiedAt set while the new email is pending: clearing it
+    // would make this look like a fresh unverified registration, and
+    // registerUser would then overwrite the password for whoever controls
+    // the new inbox. Invalidate password-reset tokens instead, since they
+    // were issued for the previous email address.
+    user.passwordResetTokenHash = undefined;
+    user.passwordResetExpiresAt = undefined;
   }
 
   if (input.displayName !== undefined) {
