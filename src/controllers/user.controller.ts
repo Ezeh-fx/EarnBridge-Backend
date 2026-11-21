@@ -6,6 +6,7 @@ import { sendData } from '../lib/response.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import {
   changePassword as changePasswordService,
+  deleteUser,
   forgotPassword as forgotPasswordService,
   getMe,
   googleLogin,
@@ -114,6 +115,14 @@ export const me = asyncHandler(async (req: Request, res: Response) => {
   const user = await getMe(req.user!.id);
   sendData(res, { user });
 });
+
+export const deleteAccount = asyncHandler(
+  async (req: Request, res: Response) => {
+    await deleteUser(req.user!.id);
+    clearAuthCookies(res);
+    sendData(res, { message: 'Account deleted' });
+  }
+);
 
 export const forgotPassword = asyncHandler(
   async (req: Request, res: Response) => {

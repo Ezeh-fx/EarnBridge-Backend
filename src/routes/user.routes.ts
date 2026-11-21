@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   changePassword,
+  deleteAccount,
   forgotPassword,
   google,
   login,
@@ -97,6 +98,12 @@ authRouter.post('/logout', validateBody(emptyBodySchema), logout);
 export const meRouter = Router();
 
 meRouter.get('/', requireAuth, me);
+meRouter.delete(
+  '/',
+  requireAuth,
+  validateBody(emptyBodySchema),
+  deleteAccount
+);
 meRouter.post(
   '/password',
   requireAuth,
