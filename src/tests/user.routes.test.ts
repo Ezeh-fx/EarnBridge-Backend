@@ -442,7 +442,7 @@ describe('user auth routes', { timeout: 20000 }, () => {
     expect(mocks.sendVerificationOTPEmail).not.toHaveBeenCalled();
   });
 
-  it('resets verification and sends an OTP when the email changes', async () => {
+  it('keeps verified status and sends an OTP when the email changes', async () => {
     await createVerifiedUser();
     const loginRes = await login().expect(200);
     const accessCookie = cookieValue(loginRes, AUTH_COOKIES.accessToken);
@@ -455,7 +455,10 @@ describe('user auth routes', { timeout: 20000 }, () => {
       .expect(200);
 
     expect(res.body.data.user.email).toBe(newEmail);
-    expect(res.body.data.user.emailVerified).toBe(false);
+    // Verified status is retained while the new email is pending; clearing
+    // it would let registerUser overwrite the password for whoever controls
+    // the new inbox.
+    expect(res.body.data.user.emailVerified).toBe(true);
     expect(mocks.sendVerificationOTPEmail).toHaveBeenCalledWith(
       newEmail,
       sentOtp,
@@ -463,7 +466,7 @@ describe('user auth routes', { timeout: 20000 }, () => {
     );
 
     const user = await User.findOne({ email: newEmail });
-    expect(user?.emailVerifiedAt).toBeUndefined();
+    expect(user?.emailVerifiedAt).toBeInstanceOf(Date);
 
     await request(app)
       .post('/v1/auth/verify-otp')
@@ -472,6 +475,43 @@ describe('user auth routes', { timeout: 20000 }, () => {
 
     const verified = await User.findById(user!._id);
     expect(verified?.emailVerifiedAt).toBeInstanceOf(Date);
+  });
+
+  it('does not let re-registration overwrite the password during a pending email change', async () => {
+    await createVerifiedUser();
+    const loginRes = await login().expect(200);
+    const accessCookie = cookieValue(loginRes, AUTH_COOKIES.accessToken);
+    const newEmail = 'pending-change@example.com';
+
+    await request(app)
+      .patch('/v1/me')
+      .set('Cookie', accessCookie as string)
+      .send({ email: newEmail })
+      .expect(200);
+
+    const otpCallsBefore = mocks.sendVerificationOTPEmail.mock.calls.length;
+
+    // Someone controlling the new inbox tries to register it with their own
+    // password. The generic response must not replace the real password.
+    await request(app)
+      .post('/v1/auth/register')
+      .send({ email: newEmail, password: 'attacker-pass-1' })
+      .expect(201);
+
+    expect(mocks.sendVerificationOTPEmail.mock.calls.length).toBe(
+      otpCallsBefore
+    );
+
+    // The original owner can still log in with their password.
+    await request(app)
+      .post('/v1/auth/login')
+      .send({ email: newEmail, password: 'password123' })
+      .expect(200);
+
+    await request(app)
+      .post('/v1/auth/login')
+      .send({ email: newEmail, password: 'attacker-pass-1' })
+      .expect(401);
   });
 
   it('rejects a profile email that is already taken', async () => {
