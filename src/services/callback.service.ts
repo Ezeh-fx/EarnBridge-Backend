@@ -49,6 +49,23 @@ const isDuplicateKeyError = (err: unknown): boolean =>
   err !== null &&
   (err as { code?: unknown }).code === 11000;
 
+// Only a duplicate on the CallbackEvent (provider, transactionId) index
+// means this callback was already handled. A 11000 from any other unique
+// index (e.g. LedgerEntry.externalTransactionId) is a real failure and must
+// propagate so ayeT retries instead of the reward being dropped.
+const isCallbackEventDuplicate = (
+  err: unknown,
+  transactionId: string
+): boolean => {
+  if (!isDuplicateKeyError(err)) {
+    return false;
+  }
+  const keyValue = (err as { keyValue?: Record<string, unknown> }).keyValue;
+  return (
+    keyValue?.provider === 'ayet' && keyValue?.transactionId === transactionId
+  );
+};
+
 interface CallbackFields {
   transactionId: string;
   externalIdentifier: string;
@@ -181,7 +198,7 @@ const processReward = async (
     });
     return 'processed';
   } catch (err) {
-    if (isDuplicateKeyError(err)) {
+    if (isCallbackEventDuplicate(err, fields.transactionId)) {
       return 'duplicate';
     }
     throw err;
@@ -278,7 +295,7 @@ const processReversal = async (
     });
     return 'reversal_processed';
   } catch (err) {
-    if (isDuplicateKeyError(err)) {
+    if (isCallbackEventDuplicate(err, fields.transactionId)) {
       return 'duplicate';
     }
     throw err;
