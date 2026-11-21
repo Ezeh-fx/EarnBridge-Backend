@@ -412,6 +412,19 @@ describe('user auth routes', { timeout: 20000 }, () => {
       .expect(409);
   });
 
+  it('rejects DELETE /v1/me without authentication and leaves the user unchanged', async () => {
+    await createVerifiedUser();
+    const user = await User.findOne({ email: registerBody.email });
+    const refreshTokensBefore = await RefreshToken.countDocuments({});
+
+    await request(app).delete('/v1/me').expect(401);
+
+    const after = await User.findById(user!._id);
+    expect(after?.status).toBe('active');
+    expect(after?.deletedAt).toBeUndefined();
+    expect(await RefreshToken.countDocuments({})).toBe(refreshTokensBefore);
+  });
+
   it('rejects /v1/me with an expired access token', async () => {
     await createVerifiedUser();
     const user = await User.findOne({ email: registerBody.email });
