@@ -6,6 +6,7 @@ import { sendData } from '../lib/response.js';
 import { AppError } from '../lib/errors.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
 import { processAyetCallback } from '../services/callback.service.js';
+import { ayetCallbackSchema } from '../types/callback.types.js';
 
 const SECURITY_HASH_HEADER = 'x-ayetstudios-security-hash';
 
@@ -59,10 +60,18 @@ export const ayetCallback = asyncHandler(
       );
     }
 
-    const outcome = await processAyetCallback(values, rawQuery);
+    const parsed = ayetCallbackSchema.safeParse(
+      Object.fromEntries(values)
+    );
 
-    // ayeT requires HTTP 200 for every verified callback, including safe
-    // duplicates and valid-but-unprocessable ones, or it will retry.
+    // ayeT requires HTTP 200 for every verified callback, including
+    // valid-but-unprocessable ones, or it will retry.
+    if (!parsed.success) {
+      sendData(res, { status: 'malformed' }, HttpStatus.OK);
+      return;
+    }
+
+    const outcome = await processAyetCallback(parsed.data, rawQuery);
     sendData(res, { status: outcome }, HttpStatus.OK);
   }
 );

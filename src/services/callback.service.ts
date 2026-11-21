@@ -5,6 +5,10 @@ import { CallbackEvent } from '../models/callbackEvent.model.js';
 import { LedgerEntry } from '../models/ledgerEntry.model.js';
 import { User } from '../models/user.model.js';
 import { Wallet } from '../models/wallet.model.js';
+import {
+  AYET_NON_FINANCIAL_CALLBACK_TYPES,
+  type AyetCallbackInput,
+} from '../types/callback.types.js';
 
 export type CallbackOutcome =
   | 'processed'
@@ -15,15 +19,9 @@ export type CallbackOutcome =
   | 'malformed'
   | 'error';
 
-// Optional event callbacks can share a transaction_id with the conversion
-// they belong to and arrive before it, so they must never occupy the dedupe
-// key of a real reward.
-const NON_FINANCIAL_CALLBACK_TYPES = new Set([
-  'installation',
-  'optional',
-  'iap',
-  'iaa',
-]);
+const NON_FINANCIAL_CALLBACK_TYPES = new Set<string>(
+  AYET_NON_FINANCIAL_CALLBACK_TYPES
+);
 
 const PAYOUT_PATTERN = /^-?\d+(\.\d{1,6})?$/;
 
@@ -63,34 +61,26 @@ interface CallbackFields {
   rawQuery: string;
 }
 
-const extractFields = (
-  values: Map<string, string>,
+const toFields = (
+  input: AyetCallbackInput,
   rawQuery: string
 ): CallbackFields | null => {
-  const transactionId = values.get('transaction_id');
-  const externalIdentifier = values.get('external_identifier');
-  const payoutUsd = values.get('payout_usd');
-
-  if (!transactionId || !externalIdentifier || !payoutUsd) {
-    return null;
-  }
-
-  const payoutMicroUsd = parsePayoutMicroUsd(payoutUsd);
+  const payoutUsd = input.payout_usd;
+  const payoutMicroUsd = payoutUsd ? parsePayoutMicroUsd(payoutUsd) : 0;
   if (payoutMicroUsd === null) {
     return null;
   }
 
-  const callbackType = values.get('callback_type');
   return {
-    transactionId,
-    externalIdentifier,
-    payoutUsd,
+    transactionId: input.transaction_id,
+    externalIdentifier: input.external_identifier,
+    payoutUsd: payoutUsd ?? '',
     payoutMicroUsd,
     isChargeback:
-      values.get('is_chargeback') === '1' || callbackType === 'chargeback',
-    callbackType,
-    isSandbox: values.get('is_sandbox') === '1',
-    adslotId: values.get('adslot_id'),
+      input.is_chargeback === '1' || input.callback_type === 'chargeback',
+    callbackType: input.callback_type,
+    isSandbox: input.is_sandbox === '1',
+    adslotId: input.adslot_id,
     rawQuery,
   };
 };
@@ -298,10 +288,10 @@ const processReversal = async (
 };
 
 export const processAyetCallback = async (
-  values: Map<string, string>,
+  input: AyetCallbackInput,
   rawQuery: string
 ): Promise<CallbackOutcome> => {
-  const fields = extractFields(values, rawQuery);
+  const fields = toFields(input, rawQuery);
   if (!fields) {
     return 'malformed';
   }
